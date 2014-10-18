@@ -88,21 +88,25 @@ public class MavenSettingsPlugin implements Plugin<Project> {
     }
 
     private void createMirrorRepository(Project project, Mirror mirror, Closure predicate) {
+        boolean mirrorFound = false
         project.repositories.all { repo ->
             if (repo instanceof MavenArtifactRepository && repo.name != ArtifactRepositoryContainer.DEFAULT_MAVEN_LOCAL_REPO_NAME
                     && !repo.url.equals(URI.create(mirror.url)) && predicate(repo)) {
                 project.repositories.remove(repo)
+                mirrorFound = true
             }
         }
 
-        Server server = settings.getServer(mirror.id)
-        project.repositories.maven {
-            name mirror.name ?: mirror.id
-            url mirror.url
-            if (server?.username != null && server?.password != null) {
-                credentials {
-                    username = server.username
-                    password = server.password
+        if (mirrorFound) {
+            Server server = settings.getServer(mirror.id)
+            project.repositories.maven {
+                name mirror.name ?: mirror.id
+                url mirror.url
+                if (server?.username != null && server?.password != null) {
+                    credentials {
+                        username = server.username
+                        password = server.password
+                    }
                 }
             }
         }

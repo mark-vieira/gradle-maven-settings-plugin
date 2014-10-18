@@ -138,4 +138,29 @@ class MavenSettingsPluginTest extends AbstractMavenSettingsTest {
         assertThat(project.repositories, hasItem(hasProperty('name', equalTo('MavenLocal'))))
         assertThat(project.repositories, hasItem(hasProperty('name', equalTo('myRemote'))))
     }
+
+    @Test
+    void declareMavenCentralMirrorWithoutCentralRepo() {
+        withSettings {
+            mirrors.add new Mirror(id: 'myrepo', mirrorOf: 'central', url: 'http://maven.foo.bar')
+        }
+
+        addPluginWithSettings(project)
+
+        project.with {
+            repositories {
+                mavenLocal()
+                maven {
+                    name 'myRemote'
+                    url "https://maven.foobar.org/repo"
+                }
+            }
+        }
+
+        project.evaluate()
+
+        assertThat(project.repositories, hasSize(2))
+        assertThat(project.repositories, hasItem(hasProperty('name', equalTo('MavenLocal'))))
+        assertThat(project.repositories, hasItem(hasProperty('name', equalTo('myRemote'))))
+    }
 }
