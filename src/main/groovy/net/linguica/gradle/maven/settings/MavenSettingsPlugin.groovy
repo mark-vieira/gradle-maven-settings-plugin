@@ -29,6 +29,7 @@ import org.gradle.mvn3.org.apache.maven.settings.building.SettingsBuildingExcept
 
 public class MavenSettingsPlugin implements Plugin<Project> {
     public static final String MAVEN_SETTINGS_EXTENSION_NAME = "mavenSettings"
+
     private Settings settings
 
     @Override
@@ -77,7 +78,7 @@ public class MavenSettingsPlugin implements Plugin<Project> {
             project.logger.info "Found central mirror in settings.xml. Replacing Maven Central repository with " +
                     "mirror located at ${centralMirror.url}"
             createMirrorRepository(project, centralMirror) { MavenArtifactRepository repo ->
-                repo.name == ArtifactRepositoryContainer.DEFAULT_MAVEN_CENTRAL_REPO_NAME
+                ArtifactRepositoryContainer.MAVEN_CENTRAL_URL.startsWith(repo.url.toString())
             }
         }
     }
