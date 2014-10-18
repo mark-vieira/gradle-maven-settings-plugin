@@ -85,6 +85,11 @@ bintray {
             name = project.version
             vcsTag = project.version
             attributes = ['gradle-plugin': "net.linguica.maven-settings:${project.group}:${project.name}"]
+
+            gpg {
+                sign = true
+                passphrase = project.hasProperty('bintrayGpgPassphrase') ? bintrayGpgPassphrase : null
+            }
         }
     }
 }
