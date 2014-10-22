@@ -21,6 +21,13 @@ To use the plugin, add the following to your `build.gradle` file.
     }
 
     apply plugin: 'net.linguica.maven-settings'
+    
+For Gradle 2.1+ you can use the new plugin mechanism to download the plugin from the 
+[Gradle Plugin Portal](http://plugins.gradle.org/).
+    
+    plugins {
+      id "net.linguica.maven-settings" version "0.1"
+    }
 
 ## Mirrors
 The plugin exposes Maven-like mirror capabilities. The plugin will properly register and enforce any 
