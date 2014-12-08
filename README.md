@@ -37,9 +37,18 @@ mirrors defined in a `settings.xml` with `<mirrorOf>` values of `*`, `external:*
 
 > **Note:** Currently only Basic Authentication using username and password is supported at this time.
 
+## Profiles
+Profiles defined in a `settings.xml` will have their properties exported to the Gradle project when the profile is considered
+active. Active profiles are those listed in the `<activeProfiles>` section of the `settings.xml`, the `activeProfiles`
+property of the `mavenSettings {...}` configuration closure, or those that satisfy the given profile's `<activation>`
+criteria.
+
 ## Configuration
 Configuration of the Maven settings plugin is done via the `mavenSettings {...}` configuration closure. The following 
 properties are available.
 
 * `userSettingsFileName` - String representing the path of the file to be used as the user settings file. This defaults to 
 `'$USER_HOME/.m2/settings.xml'`
+* `activeProfiles` - List of profile ids to treat as active.
+* `exportGradleProps` - Flag indicating whether or not Gradle project properties should be exported for the purposes of 
+settings file property interpolation and profile activation. This defaults to `true`.

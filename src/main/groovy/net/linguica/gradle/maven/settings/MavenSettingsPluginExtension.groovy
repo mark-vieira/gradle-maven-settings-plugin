@@ -25,11 +25,21 @@ class MavenSettingsPluginExtension {
      * Name of settings file to use. String is evaluated using {@link org.gradle.api.Project#file(java.lang.Object)}.
      * Defaults to $USER_HOME/.m2/settings.xml.
      */
-    String userSettingsFileName
+    String userSettingsFileName = System.getProperty("user.home") + "/.m2/settings.xml"
+
+    /**
+     * List of profile ids to treat as active.
+     */
+    String[] activeProfiles = []
+
+    /**
+     * Flag indicating whether or not Gradle project properties should be exported for the purposes of settings file
+     * property interpolation and profile activation. Defaults to true.
+     */
+    boolean exportGradleProps = true
 
     MavenSettingsPluginExtension(Project project) {
         this.project = project
-        userSettingsFileName = System.getProperty("user.home") + "/.m2/settings.xml"
     }
 
     public File getUserSettingsFile() {

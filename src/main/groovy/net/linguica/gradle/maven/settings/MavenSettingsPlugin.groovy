@@ -20,12 +20,22 @@ import org.gradle.api.GradleScriptException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.ArtifactRepositoryContainer
-import org.gradle.api.artifacts.dsl.RepositoryHandler
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository
+import org.gradle.mvn3.org.apache.maven.model.InputLocation
+import org.gradle.mvn3.org.apache.maven.model.Profile
+import org.gradle.mvn3.org.apache.maven.model.building.ModelProblem
+import org.gradle.mvn3.org.apache.maven.model.building.ModelProblemCollector
+import org.gradle.mvn3.org.apache.maven.model.path.DefaultPathTranslator
+import org.gradle.mvn3.org.apache.maven.model.profile.DefaultProfileActivationContext
+import org.gradle.mvn3.org.apache.maven.model.profile.DefaultProfileSelector
+import org.gradle.mvn3.org.apache.maven.model.profile.activation.*
 import org.gradle.mvn3.org.apache.maven.settings.Mirror
 import org.gradle.mvn3.org.apache.maven.settings.Server
 import org.gradle.mvn3.org.apache.maven.settings.Settings
+import org.gradle.mvn3.org.apache.maven.settings.SettingsUtils
 import org.gradle.mvn3.org.apache.maven.settings.building.SettingsBuildingException
+
+import java.util.Map.Entry
 
 public class MavenSettingsPlugin implements Plugin<Project> {
     public static final String MAVEN_SETTINGS_EXTENSION_NAME = "mavenSettings"
@@ -39,6 +49,7 @@ public class MavenSettingsPlugin implements Plugin<Project> {
 
         project.afterEvaluate {
             loadSettings(project, extension)
+            activateProfiles(project, extension)
             registerMirrors(project)
         }
     }
@@ -49,6 +60,35 @@ public class MavenSettingsPlugin implements Plugin<Project> {
             settings = settingsLoader.loadSettings()
         } catch (SettingsBuildingException e) {
             throw new GradleScriptException('Unable to read local Maven settings.', e)
+        }
+    }
+
+    private void activateProfiles(Project project, MavenSettingsPluginExtension extension) {
+        DefaultProfileSelector profileSelector = new DefaultProfileSelector()
+        DefaultProfileActivationContext activationContext = new DefaultProfileActivationContext();
+        ProfileActivator[] profileActivators = [new JdkVersionProfileActivator(), new OperatingSystemProfileActivator(),
+                                                new PropertyProfileActivator(), new FileProfileActivator().setPathTranslator(new DefaultPathTranslator())]
+        profileActivators.each { profileSelector.addProfileActivator(it) }
+
+        activationContext.setActiveProfileIds(extension.activeProfiles.toList() + settings.activeProfiles)
+        activationContext.setProjectDirectory(project.projectDir)
+        activationContext.setSystemProperties(System.getProperties())
+        if (extension.exportGradleProps) {
+            activationContext.setUserProperties(project.properties)
+        }
+
+        List<Profile> profiles = profileSelector.getActiveProfiles(settings.profiles.collect { return SettingsUtils.convertFromSettingsProfile(it) },
+                activationContext, new ModelProblemCollector() {
+            @Override
+            void add(ModelProblem.Severity severity, String s, InputLocation inputLocation, Exception e) {
+
+            }
+        })
+
+        profiles.each { profile ->
+            for (Entry entry: profile.properties) {
+                project.ext.set entry.key, entry.value
+            }
         }
     }
 
