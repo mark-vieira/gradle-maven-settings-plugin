@@ -17,6 +17,7 @@
 package net.linguica.gradle.maven.settings
 
 import org.gradle.mvn3.org.apache.maven.settings.Mirror
+import org.gradle.mvn3.org.apache.maven.settings.Profile
 import org.junit.Test
 
 import static org.junit.Assert.*
@@ -162,5 +163,44 @@ class MavenSettingsPluginTest extends AbstractMavenSettingsTest {
         assertThat(project.repositories, hasSize(2))
         assertThat(project.repositories, hasItem(hasProperty('name', equalTo('MavenLocal'))))
         assertThat(project.repositories, hasItem(hasProperty('name', equalTo('myRemote'))))
+    }
+
+    @Test
+    void profileActiveWithSettingsActiveProfile() {
+        def props = new Properties()
+        props.setProperty('myprop', 'true')
+
+        withSettings {
+            profiles.add new Profile(id: 'myprofile', properties: props)
+            activeProfiles = ['myprofile']
+        }
+
+        addPluginWithSettings(project)
+
+        project.evaluate()
+
+        assertThat(project.properties, hasEntry('myprop', 'true'))
+    }
+
+    @Test
+    void profileActiveWithExtensionActiveProfile() {
+        def props = new Properties()
+        props.setProperty('myprop', 'true')
+
+        withSettings {
+            profiles.add new Profile(id: 'myprofile', properties: props)
+        }
+
+        addPluginWithSettings(project)
+
+        project.with {
+            mavenSettings {
+                activeProfiles = ['myprofile']
+            }
+        }
+
+        project.evaluate()
+
+        assertThat(project.properties, hasEntry('myprop', 'true'))
     }
 }
