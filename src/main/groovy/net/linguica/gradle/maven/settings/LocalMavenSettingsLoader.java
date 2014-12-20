@@ -65,17 +65,32 @@ public class LocalMavenSettingsLoader {
 
     private void decryptCredentials(Settings settings) {
         try {
+            String masterPassword = null;
             DefaultPlexusCipher cipher = new DefaultPlexusCipher();
-            SettingsSecurity settingsSecurity = SecUtil.read(SETTINGS_SECURITY_FILE_LOCATION, true);
-            String masterPassword = cipher.decryptDecorated(settingsSecurity.getMaster(), DefaultSecDispatcher.SYSTEM_PROPERTY_SEC_LOCATION);
+            File settingsSecurityFile = new File(SETTINGS_SECURITY_FILE_LOCATION);
+            boolean hasSettingsSecurity = false;
+
+            if (settingsSecurityFile.exists() && !settingsSecurityFile.isDirectory()) {
+                SettingsSecurity settingsSecurity = SecUtil.read(SETTINGS_SECURITY_FILE_LOCATION, true);
+                masterPassword = cipher.decryptDecorated(settingsSecurity.getMaster(), DefaultSecDispatcher.SYSTEM_PROPERTY_SEC_LOCATION);
+                hasSettingsSecurity = true;
+            }
 
             for (Server server : settings.getServers()) {
                 if (cipher.isEncryptedString(server.getPassword())) {
-                    server.setPassword(cipher.decryptDecorated(server.getPassword(), masterPassword));
+                    if (hasSettingsSecurity) {
+                        server.setPassword(cipher.decryptDecorated(server.getPassword(), masterPassword));
+                    } else {
+                        throw new RuntimeException("Maven settings contains encrypted credentials yet no settings-security.xml exists.");
+                    }
                 }
 
                 if (cipher.isEncryptedString(server.getPassphrase())) {
-                    server.setPassphrase(cipher.decryptDecorated(server.getPassphrase(), masterPassword));
+                    if (hasSettingsSecurity) {
+                        server.setPassphrase(cipher.decryptDecorated(server.getPassphrase(), masterPassword));
+                    } else {
+                        throw new RuntimeException("Maven settings contains encrypted credentials yet no settings-security.xml exists.");
+                    }
                 }
             }
         } catch (Exception e) {
