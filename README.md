@@ -16,7 +16,7 @@ To use the plugin, add the following to your `build.gradle` file.
         }
         
         dependencies {
-            classpath 'net.linguica.gradle:maven-settings-plugin:0.2'
+            classpath 'net.linguica.gradle:maven-settings-plugin:0.2.1'
         }
     }
 
