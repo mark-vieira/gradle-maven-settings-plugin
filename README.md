@@ -26,7 +26,7 @@ For Gradle 2.1+ you can use the new plugin mechanism to download the plugin from
 [Gradle Plugin Portal](http://plugins.gradle.org/).
     
     plugins {
-      id "net.linguica.maven-settings" version "0.2"
+      id "net.linguica.maven-settings" version "0.2.1"
     }
 
 ## Mirrors
