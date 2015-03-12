@@ -18,6 +18,7 @@ package net.linguica.gradle.maven.settings
 
 import org.apache.maven.settings.Mirror
 import org.apache.maven.settings.Profile
+import org.apache.maven.settings.Server
 import org.junit.Test
 
 import static org.junit.Assert.*
@@ -40,7 +41,7 @@ class MavenSettingsPluginTest extends AbstractMavenSettingsTest {
             mirrors.add new Mirror(id: 'myrepo', mirrorOf: '*', url: 'http://maven.foo.bar')
         }
 
-        addPluginWithSettings(project)
+        addPluginWithSettings()
 
         project.with {
             repositories {
@@ -63,7 +64,7 @@ class MavenSettingsPluginTest extends AbstractMavenSettingsTest {
             mirrors.add new Mirror(id: 'myrepo', mirrorOf: 'external:*', url: 'http://maven.foo.bar')
         }
 
-        addPluginWithSettings(project)
+        addPluginWithSettings()
 
         project.with {
             repositories {
@@ -91,7 +92,7 @@ class MavenSettingsPluginTest extends AbstractMavenSettingsTest {
             mirrors.add new Mirror(id: 'myrepo', mirrorOf: 'external:*', url: 'http://maven.foo.bar')
         }
 
-        addPluginWithSettings(project)
+        addPluginWithSettings()
 
         project.with {
             repositories {
@@ -119,7 +120,7 @@ class MavenSettingsPluginTest extends AbstractMavenSettingsTest {
             mirrors.add new Mirror(id: 'myrepo', mirrorOf: 'central', url: 'http://maven.foo.bar')
         }
 
-        addPluginWithSettings(project)
+        addPluginWithSettings()
 
         project.with {
             repositories {
@@ -146,7 +147,7 @@ class MavenSettingsPluginTest extends AbstractMavenSettingsTest {
             mirrors.add new Mirror(id: 'myrepo', mirrorOf: 'central', url: 'http://maven.foo.bar')
         }
 
-        addPluginWithSettings(project)
+        addPluginWithSettings()
 
         project.with {
             repositories {
@@ -175,7 +176,7 @@ class MavenSettingsPluginTest extends AbstractMavenSettingsTest {
             activeProfiles = ['myprofile']
         }
 
-        addPluginWithSettings(project)
+        addPluginWithSettings()
 
         project.evaluate()
 
@@ -191,7 +192,7 @@ class MavenSettingsPluginTest extends AbstractMavenSettingsTest {
             profiles.add new Profile(id: 'myprofile', properties: props)
         }
 
-        addPluginWithSettings(project)
+        addPluginWithSettings()
 
         project.with {
             mavenSettings {
@@ -202,5 +203,28 @@ class MavenSettingsPluginTest extends AbstractMavenSettingsTest {
         project.evaluate()
 
         assertThat(project.properties, hasEntry('myprop', 'true'))
+    }
+
+    @Test
+    void credentialsAddedToNamedRepository() {
+        withSettings {
+            servers.add new Server(id: 'central', username: 'first.last', password: 'secret')
+        }
+        
+        addPluginWithSettings()
+
+        project.with {
+            repositories {
+                maven {
+                    name 'central'
+                    url 'https://repo1.maven.org/maven2/'
+                }
+            }
+        }
+
+        project.evaluate()
+
+        assertEquals('first.last', project.repositories.central.credentials.username)
+        assertEquals('secret', project.repositories.central.credentials.password)
     }
 }

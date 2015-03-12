@@ -49,7 +49,7 @@ abstract class AbstractMavenSettingsTest {
         writer.write(settingsFile, null, settings)
     }
 
-    void addPluginWithSettings(Project project) {
+    void addPluginWithSettings() {
         project.with {
             apply plugin: MavenSettingsPlugin
 

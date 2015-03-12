@@ -55,6 +55,7 @@ public class MavenSettingsPlugin implements Plugin<Project> {
             loadSettings(project, extension)
             activateProfiles(project, extension)
             registerMirrors(project)
+            applyRepoCredentials(project)
         }
     }
 
@@ -127,6 +128,16 @@ public class MavenSettingsPlugin implements Plugin<Project> {
         }
     }
 
+    private void applyRepoCredentials(Project project) {
+        project.repositories.all { repo ->
+            settings.servers.each { server ->
+                if (repo.name == server.id) {
+                    addCredentials(server, repo)
+                }
+            }
+        }
+    }
+
     private void createMirrorRepository(Project project, Mirror mirror) {
         createMirrorRepository(project, mirror) { true }
     }
@@ -143,15 +154,19 @@ public class MavenSettingsPlugin implements Plugin<Project> {
 
         if (mirrorFound) {
             Server server = settings.getServer(mirror.id)
-            project.repositories.maven {
+            project.repositories.maven { repo ->
                 name mirror.name ?: mirror.id
                 url mirror.url
-                if (server?.username != null && server?.password != null) {
-                    credentials {
-                        username = server.username
-                        password = server.password
-                    }
-                }
+                addCredentials(server, repo)
+            }
+        }
+    }
+
+    private addCredentials(Server server, MavenArtifactRepository repo) {
+        if (server?.username != null && server?.password != null) {
+            repo.credentials {
+                username = server.username
+                password = server.password
             }
         }
     }

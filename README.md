@@ -32,8 +32,23 @@ For Gradle 2.1+ you can use the new plugin mechanism to download the plugin from
 ## Mirrors
 The plugin exposes Maven-like mirror capabilities. The plugin will properly register and enforce any 
 mirrors defined in a `settings.xml` with `<mirrorOf>` values of `*`, `external:*` or `central`. Existing 
-`repositories {...}` definitions that match these identifiers will be removed. Credentials located in a matching
-`<server>` element are also used, and [decrypted](http://maven.apache.org/guides/mini/guide-encryption.html) if necessary.
+`repositories {...}` definitions that match these identifiers will be removed. 
+
+## Credentials
+The plugin will attempt to apply credentials located in `<server>` elements to appropriate Maven repository 
+definitions in your build script. This is done by matching the `<id>` element in the `settings.xml` file to the `name`
+property of the repository definition.
+
+    repositories {
+        maven {
+            name = 'myRepo' // should match <id>myRepo</id> of appropriate <server> in settings.xml
+            url = 'https://intranet.foo.org/repo'
+        }
+    }
+
+Server credentials are used for mirrors as well. When mirrors are added the plugin will look for a `<server>` element 
+with the same `<id>` and the configured credentials are used and [decrypted](http://maven.apache.org/guides/mini/guide-encryption.html) 
+if necessary.
 
 > **Note:** Currently only Basic Authentication using username and password is supported at this time.
 
