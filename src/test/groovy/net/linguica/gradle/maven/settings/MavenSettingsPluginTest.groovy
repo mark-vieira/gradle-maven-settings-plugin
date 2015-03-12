@@ -16,8 +16,8 @@
 
 package net.linguica.gradle.maven.settings
 
-import org.gradle.mvn3.org.apache.maven.settings.Mirror
-import org.gradle.mvn3.org.apache.maven.settings.Profile
+import org.apache.maven.settings.Mirror
+import org.apache.maven.settings.Profile
 import org.junit.Test
 
 import static org.junit.Assert.*

@@ -16,10 +16,10 @@
 
 package net.linguica.gradle.maven.settings
 
+import org.apache.maven.settings.Settings
+import org.apache.maven.settings.io.DefaultSettingsWriter
+import org.apache.maven.settings.io.SettingsWriter
 import org.gradle.api.Project
-import org.gradle.mvn3.org.apache.maven.settings.Settings
-import org.gradle.mvn3.org.apache.maven.settings.io.DefaultSettingsWriter
-import org.gradle.mvn3.org.apache.maven.settings.io.SettingsWriter
 import org.gradle.testfixtures.ProjectBuilder
 import org.gradle.util.ConfigureUtil
 import org.junit.After

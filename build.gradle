@@ -5,11 +5,22 @@ plugins {
     id 'com.jfrog.bintray' version '0.6'
 }
 
+ext {
+    mavenVersion = '3.0.5'
+}
+
 repositories {
     mavenCentral()
 }
 
 dependencies {
+    compile "org.apache.maven:maven-settings:$mavenVersion"
+    compile "org.apache.maven:maven-settings-builder:$mavenVersion"
+    compile "org.apache.maven:maven-model-builder:$mavenVersion"
+    compile "org.apache.maven:maven-model:$mavenVersion"
+    compile "org.apache.maven:maven-core:$mavenVersion"
+    compile 'org.sonatype.plexus:plexus-cipher:1.4'
+    compile 'org.sonatype.plexus:plexus-sec-dispatcher:1.3'
     testCompile 'junit:junit:4.11'
     testCompile 'org.hamcrest:hamcrest-library:1.3'
 }

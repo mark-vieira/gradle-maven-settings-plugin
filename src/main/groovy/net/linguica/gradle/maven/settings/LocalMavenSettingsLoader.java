@@ -16,13 +16,18 @@
 
 package net.linguica.gradle.maven.settings;
 
-import org.gradle.mvn3.org.apache.maven.settings.Server;
-import org.gradle.mvn3.org.apache.maven.settings.Settings;
-import org.gradle.mvn3.org.apache.maven.settings.building.*;
-import org.gradle.mvn3.org.sonatype.plexus.components.cipher.DefaultPlexusCipher;
-import org.gradle.mvn3.org.sonatype.plexus.components.sec.dispatcher.DefaultSecDispatcher;
-import org.gradle.mvn3.org.sonatype.plexus.components.sec.dispatcher.SecUtil;
-import org.gradle.mvn3.org.sonatype.plexus.components.sec.dispatcher.model.SettingsSecurity;
+import org.apache.maven.settings.Server;
+import org.apache.maven.settings.Settings;
+import org.apache.maven.settings.building.DefaultSettingsBuilder;
+import org.apache.maven.settings.building.DefaultSettingsBuilderFactory;
+import org.apache.maven.settings.building.DefaultSettingsBuildingRequest;
+import org.apache.maven.settings.building.SettingsBuildingException;
+import org.apache.maven.settings.building.SettingsBuildingRequest;
+import org.apache.maven.settings.building.SettingsBuildingResult;
+import org.sonatype.plexus.components.cipher.DefaultPlexusCipher;
+import org.sonatype.plexus.components.sec.dispatcher.DefaultSecDispatcher;
+import org.sonatype.plexus.components.sec.dispatcher.SecUtil;
+import org.sonatype.plexus.components.sec.dispatcher.model.SettingsSecurity;
 
 import java.io.File;
 
