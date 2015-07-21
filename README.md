@@ -50,10 +50,9 @@ Server credentials are used for mirrors as well. When mirrors are added the plug
 with the same `<id>` and the configured credentials are used and [decrypted](http://maven.apache.org/guides/mini/guide-encryption.html) 
 if necessary.
 
-> **Note:** Currently only Basic Authentication using username and password is supported at this time.
-
-### Maven-publishing suppport
-The plugin will also attempt to apply credentials to repositories configured using the maven-publishing plugin.
+### Publishing
+The plugin will also attempt to apply credentials to repositories configured using the 
+['maven-publish'](https://docs.gradle.org/current/userguide/publishing_maven.html) plugin.
 
     publishing {
         repositories {
@@ -63,6 +62,8 @@ The plugin will also attempt to apply credentials to repositories configured usi
             }
         }
     }
+    
+> **Note:** Currently only Basic Authentication using username and password is supported at this time.
 
 ## Profiles
 Profiles defined in a `settings.xml` will have their properties exported to the Gradle project when the profile is considered
