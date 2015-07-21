@@ -52,6 +52,18 @@ if necessary.
 
 > **Note:** Currently only Basic Authentication using username and password is supported at this time.
 
+### Maven-publishing suppport
+The plugin will also attempt to apply credentials to repositories configured using the maven-publishing plugin.
+
+    publishing {
+        repositories {
+            maven {
+                name = 'myRepo' // should match <id>myRepo</id> of appropriate <server> in settings.xml
+                url = 'https://intranet.foo.org/repo/repositories/releases'
+            }
+        }
+    }
+
 ## Profiles
 Profiles defined in a `settings.xml` will have their properties exported to the Gradle project when the profile is considered
 active. Active profiles are those listed in the `<activeProfiles>` section of the `settings.xml`, the `activeProfiles`

@@ -129,7 +129,12 @@ public class MavenSettingsPlugin implements Plugin<Project> {
     }
 
     private void applyRepoCredentials(Project project) {
-        project.repositories.all { repo ->
+        applyRepoCredentials(project, project.repositories)
+        applyRepoCredentials(project, project.extensions.findByName("publishing")?.repositories)
+    }
+
+    private void applyRepoCredentials(Project project, List<MavenArtifactRepository> repositories) {
+        repositories?.all { repo ->
             settings.servers.each { server ->
                 if (repo.name == server.id) {
                     addCredentials(server, repo)
