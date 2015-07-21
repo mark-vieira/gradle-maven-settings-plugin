@@ -227,4 +227,24 @@ class MavenSettingsPluginTest extends AbstractMavenSettingsTest {
         assertEquals('first.last', project.repositories.central.credentials.username)
         assertEquals('secret', project.repositories.central.credentials.password)
     }
+
+    @Test
+    void credentialsOnlyAddedToMavenRepositories() {
+        withSettings {
+            servers.add new Server(id: 'flat', username: 'first.last', password: 'secret')
+        }
+
+        addPluginWithSettings()
+
+        project.with {
+            repositories {
+                flatDir {
+                    name = 'flat'
+                    dirs '.'
+                }
+            }
+        }
+
+        project.evaluate()
+    }
 }

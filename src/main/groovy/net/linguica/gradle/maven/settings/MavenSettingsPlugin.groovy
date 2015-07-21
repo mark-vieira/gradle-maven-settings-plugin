@@ -34,10 +34,13 @@ import org.apache.maven.settings.Settings
 import org.apache.maven.settings.SettingsUtils
 import org.apache.maven.settings.building.SettingsBuildingException
 import org.gradle.api.GradleScriptException
+import org.gradle.api.Nullable
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.ArtifactRepositoryContainer
+import org.gradle.api.artifacts.repositories.ArtifactRepository
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository
+import org.gradle.api.publish.PublishingExtension
 
 import java.util.Map.Entry
 
@@ -55,7 +58,8 @@ public class MavenSettingsPlugin implements Plugin<Project> {
             loadSettings(project, extension)
             activateProfiles(project, extension)
             registerMirrors(project)
-            applyRepoCredentials(project)
+            applyRepoCredentials(project.repositories)
+            applyRepoCredentials(project.extensions.findByType(PublishingExtension)?.repositories)
         }
     }
 
@@ -128,16 +132,13 @@ public class MavenSettingsPlugin implements Plugin<Project> {
         }
     }
 
-    private void applyRepoCredentials(Project project) {
-        applyRepoCredentials(project, project.repositories)
-        applyRepoCredentials(project, project.extensions.findByName("publishing")?.repositories)
-    }
-
-    private void applyRepoCredentials(Project project, List<MavenArtifactRepository> repositories) {
+    private void applyRepoCredentials(@Nullable Collection<ArtifactRepository> repositories) {
         repositories?.all { repo ->
-            settings.servers.each { server ->
-                if (repo.name == server.id) {
-                    addCredentials(server, repo)
+            if (repo instanceof MavenArtifactRepository) {
+                settings.servers.each { server ->
+                    if (repo.name == server.id) {
+                        addCredentials(server, repo)
+                    }
                 }
             }
         }
