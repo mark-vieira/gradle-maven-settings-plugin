@@ -28,7 +28,7 @@ dependencies {
 sourceCompatibility = '1.6'
 targetCompatibility = '1.6'
 
-version = "0.4"
+version = "0.5"
 
 pluginBundle {
     website = 'https://github.com/mark-vieira/gradle-maven-settings-plugin'
