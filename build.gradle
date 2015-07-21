@@ -1,8 +1,6 @@
 plugins {
-    id 'java-gradle-plugin'
     id 'groovy'
-    id 'maven-publish'
-    id 'com.jfrog.bintray' version '0.6'
+    id "com.gradle.plugin-publish" version "0.9.1"
 }
 
 ext {
@@ -14,6 +12,8 @@ repositories {
 }
 
 dependencies {
+    compile gradleApi()
+    compile localGroovy()
     compile "org.apache.maven:maven-settings:$mavenVersion"
     compile "org.apache.maven:maven-settings-builder:$mavenVersion"
     compile "org.apache.maven:maven-model-builder:$mavenVersion"
@@ -28,85 +28,23 @@ dependencies {
 sourceCompatibility = '1.6'
 targetCompatibility = '1.6'
 
-task sourcesJar(type: Jar) {
-    classifier 'sources'
-    from sourceSets.main.allSource
-}
+version = "0.4"
 
-task javadocJar(type: Jar) {
-	classifier 'javadoc'
-	from javadoc
-}
+pluginBundle {
+    website = 'https://github.com/mark-vieira/gradle-maven-settings-plugin'
+    vcsUrl = 'https://github.com/mark-vieira/gradle-maven-settings-plugin'
+    description = 'Gradle plugin for exposing Maven settings file configuration to Gradle project.'
+    tags = ['settings', 'maven']
 
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            from components.java
-            artifact sourcesJar
-            artifact javadocJar
-
-            pom.withXml {
-                asNode().with {
-                    appendNode('name', 'Gradle Maven settings plugin')
-                    appendNode('description', 'Gradle plugin for exposing Maven settings file configuration to Gradle project.')
-                    appendNode('url', 'https://github.com/mark-vieira/gradle-maven-settings-plugin')
-                    appendNode('inceptionYear', '2014')
-                }
-
-                asNode().appendNode('licenses').appendNode('license').with {
-                    appendNode('name', 'The Apache Software License, Version 2.0')
-                    appendNode('url', 'http://www.apache.org/licenses/LICENSE-2.0.txt')
-                    appendNode('distribution', 'repo')
-                }
-
-                asNode().appendNode('scm').with {
-                    appendNode('url', 'https://github.com/mark-vieira/gradle-maven-settings-plugin')
-                    appendNode('connection', 'scm:git:https://github.com/mark-vieira/gradle-maven-settings-plugin.git')
-                    appendNode('developerConnection', 'scm:git:https://mark-vieira@github.com/mark-vieira/gradle-maven-settings-plugin.git')
-                }
-
-                asNode().appendNode('developers').appendNode('developer').with {
-                    appendNode('id', 'mark-vieira')
-                    appendNode('name', 'Mark Vieira')
-                    appendNode('email', 'portugee@gmail.com')
-                    appendNode('url', 'https://github.com/mark-vieira')
-                }
-
-                asNode().appendNode('issueManagement').with {
-                    appendNode('system', 'GitHub')
-                    appendNode('url', 'https://github.com/mark-vieira/gradle-maven-settings-plugin/issues')
-                }
-            }
+    plugins {
+        mavenSettings {
+            id = 'net.linguica.maven-settings'
+            displayName = 'Maven Settings Plugin'
         }
     }
-}
 
-bintray {
-    user = project.hasProperty('bintrayUser') ? bintrayUser : null
-    key = project.hasProperty('bintrayApiKey') ? bintrayApiKey : null
-
-    publications = ['mavenJava']
-
-    pkg {
-        repo = 'maven'
-        name = 'gradle-maven-settings-plugin'
-        desc = 'Gradle plugin for exposing Maven settings file configuration to Gradle project.'
-        websiteUrl = 'https://github.com/mark-vieira/gradle-maven-settings-plugin'
-        issueTrackerUrl = 'https://github.com/mark-vieira/gradle-maven-settings-plugin/issues'
-        vcsUrl = 'https://github.com/mark-vieira/gradle-maven-settings-plugin.git'
-        licenses = ['Apache-2.0']
-        labels = ['gradle', 'maven', 'settings']
-        publicDownloadNumbers = true
-
-        version {
-            name = project.version
-            vcsTag = project.version
-            attributes = ['gradle-plugin': "net.linguica.maven-settings:${project.group}:${project.name}"]
-
-            gpg {
-                sign = true
-                passphrase = project.hasProperty('bintrayGpgPassphrase') ? bintrayGpgPassphrase : null
-            }
-        }
+    mavenCoordinates {
+        groupId = 'net.linguica.gradle'
+        artifactId = 'maven-settings-plugin'
     }
 }

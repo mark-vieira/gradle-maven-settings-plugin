@@ -1,5 +1,3 @@
-[ ![Download](https://api.bintray.com/packages/markvieira/maven/gradle-maven-settings-plugin/images/download.svg) ](https://bintray.com/markvieira/maven/gradle-maven-settings-plugin/_latestVersion)
-
 # Gradle Maven settings plugin
 
 This Gradle plugin provides a migration path for projects coming from a Maven ecosystem. It exposes standard Maven
@@ -12,11 +10,13 @@ To use the plugin, add the following to your `build.gradle` file.
 
     buildscript {
         repositories {
-            jcenter()
+            maven {
+                url "https://plugins.gradle.org/m2/"
+            }
         }
         
         dependencies {
-            classpath 'net.linguica.gradle:maven-settings-plugin:0.3'
+            classpath 'net.linguica.gradle:maven-settings-plugin:0.4'
         }
     }
 
@@ -26,7 +26,7 @@ For Gradle 2.1+ you can use the new plugin mechanism to download the plugin from
 [Gradle Plugin Portal](http://plugins.gradle.org/).
     
     plugins {
-      id "net.linguica.maven-settings" version "0.3"
+      id "net.linguica.maven-settings" version "0.4"
     }
 
 ## Mirrors
