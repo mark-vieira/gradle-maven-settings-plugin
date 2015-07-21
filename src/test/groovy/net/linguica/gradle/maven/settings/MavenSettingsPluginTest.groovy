@@ -247,4 +247,31 @@ class MavenSettingsPluginTest extends AbstractMavenSettingsTest {
 
         project.evaluate()
     }
+
+    @Test
+    void credentialsAddedToPublishingRepository() {
+        withSettings {
+            servers.add new Server(id: 'central', username: 'first.last', password: 'secret')
+        }
+
+        addPluginWithSettings()
+
+        project.with {
+            apply plugin: 'maven-publish'
+
+            publishing {
+                repositories {
+                    maven {
+                        name 'central'
+                        url 'https://repo1.maven.org/maven2/'
+                    }
+                }
+            }
+        }
+
+        project.evaluate()
+
+        assertEquals('first.last', project.publishing.repositories.central.credentials.username)
+        assertEquals('secret', project.publishing.repositories.central.credentials.password)
+    }
 }
