@@ -48,10 +48,10 @@ public class LocalMavenSettingsLoader {
 
     /**
      * Loads and merges Maven settings from global and local user configuration files. Returned
-     * {@link org.gradle.mvn3.org.apache.maven.settings.Settings} object includes decrypted credentials.
+     * {@link org.apache.maven.settings.Settings} object includes decrypted credentials.
      *
      * @return Effective settings
-     * @throws SettingsBuildingException
+     * @throws SettingsBuildingException If the effective settings cannot be built
      */
     public Settings loadSettings() throws SettingsBuildingException {
         SettingsBuildingRequest settingsBuildingRequest = new DefaultSettingsBuildingRequest();
