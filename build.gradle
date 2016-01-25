@@ -1,6 +1,6 @@
 plugins {
     id 'groovy'
-    id "com.gradle.plugin-publish" version "0.9.1"
+    id "com.gradle.plugin-publish" version "0.9.3"
 }
 
 ext {
@@ -27,8 +27,6 @@ dependencies {
 
 sourceCompatibility = '1.6'
 targetCompatibility = '1.6'
-
-version = "0.5"
 
 pluginBundle {
     website = 'https://github.com/mark-vieira/gradle-maven-settings-plugin'
