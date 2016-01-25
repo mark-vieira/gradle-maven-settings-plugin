@@ -34,6 +34,9 @@ The plugin exposes Maven-like mirror capabilities. The plugin will properly regi
 mirrors defined in a `settings.xml` with `<mirrorOf>` values of `*`, `external:*` or `central`. Existing 
 `repositories {...}` definitions that match these identifiers will be removed. 
 
+Exclusions are also taken into consideration. For example, a `<mirrorOf>` value of `*,!myRepo` will replace
+all repositories except for the repository with the name 'myRepo'.
+
 ## Credentials
 The plugin will attempt to apply credentials located in `<server>` elements to appropriate Maven repository 
 definitions in your build script. This is done by matching the `<id>` element in the `settings.xml` file to the `name`
