@@ -150,9 +150,10 @@ public class MavenSettingsPlugin implements Plugin<Project> {
 
     private void createMirrorRepository(Project project, Mirror mirror, Closure predicate) {
         boolean mirrorFound = false
+        List<String> excludedRepositoryNames = mirror.mirrorOf.split(',').findAll { it.startsWith("!") }.collect { it.substring(1) }
         project.repositories.all { repo ->
             if (repo instanceof MavenArtifactRepository && repo.name != ArtifactRepositoryContainer.DEFAULT_MAVEN_LOCAL_REPO_NAME
-                    && !repo.url.equals(URI.create(mirror.url)) && predicate(repo)) {
+                    && !repo.url.equals(URI.create(mirror.url)) && predicate(repo) && !excludedRepositoryNames.contains(repo.getName())) {
                 project.repositories.remove(repo)
                 mirrorFound = true
             }

@@ -59,6 +59,37 @@ class MavenSettingsPluginTest extends AbstractMavenSettingsTest {
     }
 
     @Test
+    void respectsMirrorExcludes() {
+        withSettings {
+            mirrors.add new Mirror(id: 'myrepo', mirrorOf: '*,!some-repo', url: 'http://maven.foo.bar')
+        }
+
+        addPluginWithSettings()
+
+        project.with {
+            repositories {
+                mavenLocal()
+                mavenCentral()
+                maven {
+                    name "some-repo"
+                    url "https://example.com"
+                }
+                maven {
+                    name "some-other-repo"
+                    url "https://example.com"
+                }
+            }
+        }
+
+        project.evaluate()
+
+        assertThat(project.repositories, hasSize(3))
+        assertThat(project.repositories, hasItem(hasProperty('name', equalTo('myrepo'))))
+        assertThat(project.repositories, hasItem(hasProperty('name', equalTo('MavenLocal'))))
+        assertThat(project.repositories, hasItem(hasProperty('name', equalTo('some-repo'))))
+    }
+
+    @Test
     void declareExternalMirrorWithFileRepo() {
         withSettings {
             mirrors.add new Mirror(id: 'myrepo', mirrorOf: 'external:*', url: 'http://maven.foo.bar')
