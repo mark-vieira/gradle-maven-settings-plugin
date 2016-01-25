@@ -16,7 +16,7 @@ To use the plugin, add the following to your `build.gradle` file.
         }
         
         dependencies {
-            classpath 'net.linguica.gradle:maven-settings-plugin:0.4'
+            classpath 'net.linguica.gradle:maven-settings-plugin:0.5'
         }
     }
 
@@ -26,7 +26,7 @@ For Gradle 2.1+ you can use the new plugin mechanism to download the plugin from
 [Gradle Plugin Portal](http://plugins.gradle.org/).
     
     plugins {
-      id "net.linguica.maven-settings" version "0.4"
+      id "net.linguica.maven-settings" version "0.5"
     }
 
 ## Mirrors
