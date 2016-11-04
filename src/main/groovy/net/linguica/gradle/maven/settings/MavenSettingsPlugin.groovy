@@ -16,22 +16,13 @@
 
 package net.linguica.gradle.maven.settings
 
-import org.apache.maven.model.InputLocation
-import org.apache.maven.model.building.ModelProblem
 import org.apache.maven.model.building.ModelProblemCollector
+import org.apache.maven.model.building.ModelProblemCollectorRequest
 import org.apache.maven.model.path.DefaultPathTranslator
 import org.apache.maven.model.profile.DefaultProfileActivationContext
 import org.apache.maven.model.profile.DefaultProfileSelector
-import org.apache.maven.model.profile.activation.FileProfileActivator
-import org.apache.maven.model.profile.activation.JdkVersionProfileActivator
-import org.apache.maven.model.profile.activation.OperatingSystemProfileActivator
-import org.apache.maven.model.profile.activation.ProfileActivator
-import org.apache.maven.model.profile.activation.PropertyProfileActivator
-import org.apache.maven.settings.Mirror
-import org.apache.maven.settings.Profile
-import org.apache.maven.settings.Server
-import org.apache.maven.settings.Settings
-import org.apache.maven.settings.SettingsUtils
+import org.apache.maven.model.profile.activation.*
+import org.apache.maven.settings.*
 import org.apache.maven.settings.building.SettingsBuildingException
 import org.gradle.api.GradleScriptException
 import org.gradle.api.Nullable
@@ -89,7 +80,7 @@ public class MavenSettingsPlugin implements Plugin<Project> {
         List<Profile> profiles = profileSelector.getActiveProfiles(settings.profiles.collect { return SettingsUtils.convertFromSettingsProfile(it) },
                 activationContext, new ModelProblemCollector() {
             @Override
-            void add(ModelProblem.Severity severity, String s, InputLocation inputLocation, Exception e) {
+            void add(ModelProblemCollectorRequest req) {
 
             }
         })
