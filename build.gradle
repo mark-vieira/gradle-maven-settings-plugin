@@ -5,7 +5,7 @@ plugins {
 }
 
 ext {
-    mavenVersion = '3.0.5'
+    mavenVersion = '3.3.9'
 }
 
 repositories {
