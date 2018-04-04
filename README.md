@@ -6,12 +6,19 @@ projects to continue to leverage functionality provided by Maven such as mirrors
 settings configuration to store encrypted repository authentication credentials.
 
 ## Usage
+This plugin is hosted on the [Gradle Plugin Portal](https://plugins.gradle.org/plugin/net.linguica.maven-settings).
 To use the plugin, add the following to your `build.gradle` file.
-
+    
+    plugins {
+      id 'net.linguica.maven-settings' version '0.5'
+    }
+    
+For Gradle 2.0 or earlier you must add the following:
+    
     buildscript {
         repositories {
             maven {
-                url "https://plugins.gradle.org/m2/"
+                url 'https://plugins.gradle.org/m2/'
             }
         }
         
@@ -21,13 +28,6 @@ To use the plugin, add the following to your `build.gradle` file.
     }
 
     apply plugin: 'net.linguica.maven-settings'
-    
-For Gradle 2.1+ you can use the new plugin mechanism to download the plugin from the 
-[Gradle Plugin Portal](http://plugins.gradle.org/).
-    
-    plugins {
-      id "net.linguica.maven-settings" version "0.5"
-    }
 
 ## Mirrors
 The plugin exposes Maven-like mirror capabilities. The plugin will properly register and enforce any 
