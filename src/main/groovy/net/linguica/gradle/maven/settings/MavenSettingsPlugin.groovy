@@ -77,7 +77,7 @@ class MavenSettingsPlugin implements Plugin<Project> {
 
     private void activateProfiles(Project project, MavenSettingsPluginExtension extension) {
         DefaultProfileSelector profileSelector = new DefaultProfileSelector()
-        DefaultProfileActivationContext activationContext = new DefaultProfileActivationContext();
+        DefaultProfileActivationContext activationContext = new DefaultProfileActivationContext()
         List<ProfileActivator> profileActivators = [new JdkVersionProfileActivator(), new OperatingSystemProfileActivator(),
                                                 new PropertyProfileActivator(), new FileProfileActivator().setPathTranslator(new DefaultPathTranslator())]
         profileActivators.each { profileSelector.addProfileActivator(it) }
@@ -110,7 +110,7 @@ class MavenSettingsPlugin implements Plugin<Project> {
             project.logger.info "Found global mirror in settings.xml. Replacing Maven repositories with mirror " +
                     "located at ${globalMirror.url}"
             createMirrorRepository(project, globalMirror)
-            return;
+            return
         }
 
         Mirror externalMirror = settings.mirrors.find { it.mirrorOf.split(',').contains('external:*') }
@@ -122,7 +122,7 @@ class MavenSettingsPlugin implements Plugin<Project> {
                 // only match repositories not on localhost and not file based
                 repo.url.scheme != 'file' && !(host.anyLocalAddress || host.isLoopbackAddress() || NetworkInterface.getByInetAddress(host) != null)
             }
-            return;
+            return
         }
 
         Mirror centralMirror = settings.mirrors.find { it.mirrorOf.split(',').contains('central') }
@@ -156,7 +156,7 @@ class MavenSettingsPlugin implements Plugin<Project> {
         List<String> excludedRepositoryNames = mirror.mirrorOf.split(',').findAll { it.startsWith("!") }.collect { it.substring(1) }
         project.repositories.all { repo ->
             if (repo instanceof MavenArtifactRepository && repo.name != ArtifactRepositoryContainer.DEFAULT_MAVEN_LOCAL_REPO_NAME
-                    && !repo.url.equals(URI.create(mirror.url)) && predicate(repo) && !excludedRepositoryNames.contains(repo.getName())) {
+                    && repo.url != URI.create(mirror.url) && predicate(repo) && !excludedRepositoryNames.contains(repo.getName())) {
                 project.repositories.remove(repo)
                 mirrorFound = true
             }
@@ -172,7 +172,7 @@ class MavenSettingsPlugin implements Plugin<Project> {
         }
     }
 
-    private addCredentials(Server server, MavenArtifactRepository repo) {
+    private static addCredentials(Server server, MavenArtifactRepository repo) {
         if (server?.username != null && server?.password != null) {
             repo.credentials {
                 it.username = server.username
