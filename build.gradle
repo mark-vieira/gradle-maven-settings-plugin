@@ -1,17 +1,29 @@
 plugins {
-    id 'com.gradle.build-scan' version '1.16'
+//    id 'build-scan'
     id 'groovy'
     id 'maven'
-    id "com.gradle.plugin-publish" version "0.9.10"
+    id 'maven-publish'
+    id "com.gradle.plugin-publish" version "0.10.1"
 }
 
-buildScan {
-    termsOfServiceUrl = 'https://gradle.com/terms-of-service'
-    termsOfServiceAgree = 'yes'
-}
+//buildScan {
+//    termsOfServiceUrl = 'https://gradle.com/terms-of-service'
+//    termsOfServiceAgree = 'yes'
+//}
 
 ext {
-    mavenVersion = '3.0.5'
+    mavenVersion = '3.6.3'
+}
+
+publishing {
+    publications {
+        pluginPublication (MavenPublication) {
+            from    components.java
+            groupId    project.group
+            artifactId "maven-settings-gitlab"
+            version    project.version
+        }
+    }
 }
 
 repositories {
@@ -36,20 +48,20 @@ sourceCompatibility = '1.6'
 targetCompatibility = '1.6'
 
 pluginBundle {
-    website = 'https://github.com/mark-vieira/gradle-maven-settings-plugin'
-    vcsUrl = 'https://github.com/mark-vieira/gradle-maven-settings-plugin'
-    description = 'Gradle plugin for exposing Maven settings file configuration to Gradle project.'
-    tags = ['settings', 'maven']
+    website = 'https://github.com/acidbee/gradle-maven-settings-plugin'
+    vcsUrl = 'https://github.com/acidbee/gradle-maven-settings-plugin'
+    description = 'Gradle plugin for exposing Maven settings file configuration to Gradle project. Supports header authentication for GitLab'
+    tags = ['settings', 'maven', 'gitlab']
 
     plugins {
         mavenSettings {
-            id = 'net.linguica.maven-settings'
-            displayName = 'Maven Settings Plugin'
+            id = 'co.coxes.maven-settings-gitlab'
+            displayName = 'Maven Settings Plugin (GitLab Support)'
         }
     }
 
     mavenCoordinates {
-        groupId = 'net.linguica.gradle'
-        artifactId = 'maven-settings-plugin'
+        groupId = 'co.coxes.gradle'
+        artifactId = 'maven-settings-gitlab-plugin'
     }
 }
