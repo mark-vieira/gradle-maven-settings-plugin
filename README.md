@@ -10,7 +10,7 @@ This plugin is hosted on the [Gradle Plugin Portal](https://plugins.gradle.org/p
 To use the plugin, add the following to your `build.gradle` file.
     
     plugins {
-      id 'net.linguica.maven-settings' version '0.5'
+      id 'net.linguica.maven-settings' version '0.6'
     }
     
 For Gradle 2.0 or earlier you must add the following:
@@ -23,7 +23,7 @@ For Gradle 2.0 or earlier you must add the following:
         }
         
         dependencies {
-            classpath 'net.linguica.gradle:maven-settings-plugin:0.5'
+            classpath 'net.linguica.gradle:maven-settings-plugin:0.6'
         }
     }
 
@@ -66,7 +66,32 @@ The plugin will also attempt to apply credentials to repositories configured usi
         }
     }
     
-> **Note:** Currently only Basic Authentication using username and password is supported at this time.
+
+### Supported Types
+The plugin currently supports Basic Authentication credentials and Http Header Authentication. If both are provided for a server
+the basic authentication credentials are preferred.
+
+```xml
+<settings>
+  <servers>
+    <server>
+      <id>myRepo</id>
+      <!--basic authentication-->
+      <username>username</username>
+      <password>encrypted-secret</password>
+      <!--http header authentication-->
+      <configuration>
+        <httpHeaders>
+          <property>
+            <name>Some-Auth-Token</name>
+            <value>secret</value>
+          </property>
+        </httpHeaders>
+      </configuration>
+    </server>
+  </servers>
+</settings>
+```
 
 ## Profiles
 Profiles defined in a `settings.xml` will have their properties exported to the Gradle project when the profile is considered
