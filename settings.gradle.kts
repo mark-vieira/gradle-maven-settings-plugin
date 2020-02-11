@@ -9,4 +9,4 @@ gradleEnterprise{
     }
 }
 
-rootProject.name = "maven-settings-gitlab-plugin"
+rootProject.name = "maven-settings-plugin"

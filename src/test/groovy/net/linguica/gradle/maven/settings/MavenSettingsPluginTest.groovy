@@ -31,7 +31,7 @@ class MavenSettingsPluginTest extends AbstractMavenSettingsTest {
     @Test
     void applyMavenSettingsPlugin() {
         project.with {
-            apply plugin: 'co.coxes.maven-settings-gitlab'
+            apply plugin: 'net.linguica.maven-settings'
         }
 
         assertTrue(project.plugins.hasPlugin(MavenSettingsPlugin.class))

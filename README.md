@@ -10,7 +10,7 @@ This plugin is hosted on the [Gradle Plugin Portal](https://plugins.gradle.org/p
 To use the plugin, add the following to your `build.gradle` file.
     
     plugins {
-      id 'co.coxes.maven-settings-gitlab' version '0.6.2'
+      id 'net.linguica.maven-settings' version '0.6'
     }
     
 For Gradle 2.0 or earlier you must add the following:
@@ -23,11 +23,11 @@ For Gradle 2.0 or earlier you must add the following:
         }
         
         dependencies {
-            classpath 'co.coxes.gradle:maven-settings-gitlab-plugin:0.6.2'
+            classpath 'net.linguica.gradle:maven-settings-plugin:0.6'
         }
     }
 
-    apply plugin: 'co.coxes.maven-settings-gitlab'
+    apply plugin: 'net.linguica.maven-settings'
 
 ## Mirrors
 The plugin exposes Maven-like mirror capabilities. The plugin will properly register and enforce any 

@@ -10,7 +10,7 @@ publishing {
     publications {
         create<MavenPublication>("maven") {
             groupId = project.group as String?
-            artifactId = "maven-settings-gitlab"
+            artifactId = "maven-settings"
             version = project.version as String?
 
             from(components["java"])
@@ -50,20 +50,20 @@ java {
 pluginBundle {
     website = "https://github.com/acidbee/gradle-maven-settings-plugin"
     vcsUrl = "https://github.com/acidbee/gradle-maven-settings-plugin"
-    description = "Gradle plugin for exposing Maven settings file configuration to Gradle project. Supports header authentication for GitLab"
-    tags = listOf("settings", "maven", "gitlab")
+    description = "Gradle plugin for exposing Maven settings file configuration to Gradle project."
+    tags = listOf("settings", "maven")
 
     mavenCoordinates {
-        groupId = "co.coxes.gradle"
-        artifactId = "maven-settings-gitlab-plugin"
+        groupId = "net.linguica.gradle"
+        artifactId = "maven-settings-plugin"
     }
 }
 
 gradlePlugin {
     plugins {
         create("mavenSettings") {
-            id = "co.coxes.maven-settings-gitlab"
-            displayName = "Maven Settings Plugin (GitLab Support)"
+            id = "net.linguica.maven-settings"
+            displayName = "Maven Settings Plugin"
             implementationClass = "net.linguica.gradle.maven.settings.MavenSettingsPlugin"
         }
     }
