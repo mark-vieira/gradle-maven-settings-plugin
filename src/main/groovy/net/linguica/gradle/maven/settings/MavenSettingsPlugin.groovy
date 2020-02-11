@@ -45,6 +45,7 @@ import org.gradle.api.artifacts.ArtifactRepositoryContainer
 import org.gradle.api.artifacts.dsl.RepositoryHandler
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository
 import org.gradle.api.artifacts.repositories.PasswordCredentials
+import org.gradle.api.credentials.AwsCredentials
 import org.gradle.api.credentials.Credentials
 import org.gradle.api.credentials.HttpHeaderCredentials
 import org.gradle.api.plugins.ExtraPropertiesExtension
@@ -197,9 +198,10 @@ class MavenSettingsPlugin implements Plugin<Project> {
                     credName = header.getChild("name").getValue()
                     credPassword = header.getChild("value").getValue()
                 }
+                //noinspection GroovyVariableNotAssigned
                 repo.credentials(HttpHeaderCredentials, new Action<HttpHeaderCredentials>(){
                     @Override
-                    public void execute(HttpHeaderCredentials credentials){
+                    void execute(HttpHeaderCredentials credentials){
                         credentials.name = credName
                         credentials.value = credPassword
                     }
