@@ -19,17 +19,19 @@ package net.linguica.gradle.maven.settings
 import org.apache.maven.settings.Mirror
 import org.apache.maven.settings.Profile
 import org.apache.maven.settings.Server
+import org.codehaus.plexus.util.xml.Xpp3DomBuilder
+import org.gradle.api.credentials.HttpHeaderCredentials
 import org.junit.Test
 
-import static org.junit.Assert.*
 import static org.hamcrest.Matchers.*
+import static org.junit.Assert.*
 
 class MavenSettingsPluginTest extends AbstractMavenSettingsTest {
 
     @Test
     void applyMavenSettingsPlugin() {
         project.with {
-            apply plugin: 'net.linguica.maven-settings'
+            apply plugin: 'co.coxes.maven-settings-gitlab'
         }
 
         assertTrue(project.plugins.hasPlugin(MavenSettingsPlugin.class))
@@ -260,7 +262,7 @@ class MavenSettingsPluginTest extends AbstractMavenSettingsTest {
     }
 
     @Test
-    void credentialsOnlyAddedToMavenRepositories() {
+    void basicAuthCredentialsOnlyAddedToMavenRepositories() {
         withSettings {
             servers.add new Server(id: 'flat', username: 'first.last', password: 'secret')
         }
@@ -280,7 +282,42 @@ class MavenSettingsPluginTest extends AbstractMavenSettingsTest {
     }
 
     @Test
-    void credentialsAddedToPublishingRepository() {
+    void headersAddedToMavenRepositories() {
+        def text = '''
+            <configuration>
+              <httpHeaders>
+                <property>
+                  <name>Auth-Token</name>
+                  <value>secret</value>
+                </property>
+              </httpHeaders>
+            </configuration>
+        '''
+
+        def dom = Xpp3DomBuilder.build(new ByteArrayInputStream(text.getBytes()),"UTF-8");
+        withSettings {
+            servers.add new Server(id: 'central', configuration: dom)
+        }
+
+        addPluginWithSettings()
+
+        project.with {
+            repositories {
+                maven {
+                    name 'central'
+                    url 'https://repo1.maven.org/maven2/'
+                }
+            }
+        }
+
+        project.evaluate()
+
+        assertEquals('Auth-Token', project.repositories.central.getCredentials(HttpHeaderCredentials.class).getName())
+        assertEquals('secret', project.repositories.central.getCredentials(HttpHeaderCredentials.class).getValue())
+    }
+
+    @Test
+    void basicAuthCredentialsAddedToPublishingRepository() {
         withSettings {
             servers.add new Server(id: 'central', username: 'first.last', password: 'secret')
         }

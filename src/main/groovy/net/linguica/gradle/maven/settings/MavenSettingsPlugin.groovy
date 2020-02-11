@@ -21,6 +21,7 @@ import org.apache.maven.model.InputLocation
 import org.apache.maven.model.Profile
 import org.apache.maven.model.building.ModelProblem
 import org.apache.maven.model.building.ModelProblemCollector
+import org.apache.maven.model.building.ModelProblemCollectorRequest
 import org.apache.maven.model.path.DefaultPathTranslator
 import org.apache.maven.model.profile.DefaultProfileActivationContext
 import org.apache.maven.model.profile.DefaultProfileSelector
@@ -34,14 +35,23 @@ import org.apache.maven.settings.Server
 import org.apache.maven.settings.Settings
 import org.apache.maven.settings.SettingsUtils
 import org.apache.maven.settings.building.SettingsBuildingException
+import org.codehaus.plexus.util.xml.Xpp3Dom
+import org.codehaus.plexus.util.xml.Xpp3DomBuilder
+import org.gradle.api.Action
 import org.gradle.api.GradleScriptException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.ArtifactRepositoryContainer
 import org.gradle.api.artifacts.dsl.RepositoryHandler
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository
+import org.gradle.api.artifacts.repositories.PasswordCredentials
+import org.gradle.api.credentials.AwsCredentials
+import org.gradle.api.credentials.Credentials
+import org.gradle.api.credentials.HttpHeaderCredentials
 import org.gradle.api.plugins.ExtraPropertiesExtension
 import org.gradle.api.publish.PublishingExtension
+import org.gradle.authentication.http.HttpHeaderAuthentication
+import org.gradle.internal.credentials.DefaultHttpHeaderCredentials
 
 import javax.annotation.Nullable
 import java.util.Map.Entry
@@ -92,7 +102,7 @@ class MavenSettingsPlugin implements Plugin<Project> {
         List<Profile> profiles = profileSelector.getActiveProfiles(settings.profiles.collect { return SettingsUtils.convertFromSettingsProfile(it) },
                 activationContext, new ModelProblemCollector() {
             @Override
-            void add(ModelProblem.Severity severity, String s, InputLocation inputLocation, Exception e) {
+            void add(ModelProblemCollectorRequest req) {
 
             }
         })
@@ -178,6 +188,26 @@ class MavenSettingsPlugin implements Plugin<Project> {
                 it.username = server.username
                 it.password = server.password
             }
+        } else if (server?.configuration != null) {
+            def dom = (Xpp3Dom) server.configuration
+            def headers = dom.getChild("httpHeaders").getChildren("property")
+            if (headers?.size() > 0) {
+                String credName
+                String credPassword
+                for (def header : headers) {
+                    credName = header.getChild("name").getValue()
+                    credPassword = header.getChild("value").getValue()
+                }
+                //noinspection GroovyVariableNotAssigned
+                repo.credentials(HttpHeaderCredentials, new Action<HttpHeaderCredentials>(){
+                    @Override
+                    void execute(HttpHeaderCredentials credentials){
+                        credentials.name = credName
+                        credentials.value = credPassword
+                    }
+                })
+            }
+            repo.authentication.create("header", HttpHeaderAuthentication.class)
         }
     }
 }
