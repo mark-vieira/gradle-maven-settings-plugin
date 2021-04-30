@@ -35,7 +35,7 @@ pluginBundle {
     tags = listOf("settings", "maven")
 
     mavenCoordinates {
-        groupId = "net.linguica.gradle"
+        groupId = "org.bonitasoft.gradle"
         artifactId = "maven-settings-plugin"
     }
 }
@@ -43,7 +43,7 @@ pluginBundle {
 gradlePlugin {
     plugins {
         create("mavenSettings") {
-            id = "net.linguica.maven-settings"
+            id = "org.bonitasoft.maven-settings"
             displayName = "Maven Settings Plugin"
             implementationClass = "net.linguica.gradle.maven.settings.MavenSettingsPlugin"
         }

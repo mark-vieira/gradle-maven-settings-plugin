@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.linguica.gradle.maven.settings
+package org.bonitasoft.gradle.maven.settings
 
 import org.gradle.api.Project
 
