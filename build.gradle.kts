@@ -45,7 +45,7 @@ gradlePlugin {
         create("mavenSettings") {
             id = "org.bonitasoft.maven-settings"
             displayName = "Maven Settings Plugin"
-            implementationClass = "net.linguica.gradle.maven.settings.MavenSettingsPlugin"
+            implementationClass = "org.bonitasoft.gradle.maven.settings.MavenSettingsPlugin"
         }
     }
 }

@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package org.bonitasoft.gradle.maven.settings;
+package org.bonitasoft.gradle.maven.settings
 
+import groovy.transform.CompileStatic;
 import org.apache.maven.settings.Server;
 import org.apache.maven.settings.Settings;
 import org.apache.maven.settings.building.DefaultSettingsBuilder;
@@ -36,13 +37,14 @@ import java.io.File;
  *
  * @author Mark Vieira
  */
-public class LocalMavenSettingsLoader {
+@CompileStatic
+class LocalMavenSettingsLoader {
     public static final File GLOBAL_SETTINGS_FILE = new File(System.getenv("M2_HOME"), "conf/settings.xml");
     public static final String SETTINGS_SECURITY_FILE_LOCATION = System.getProperty("user.home") + "/.m2/settings-security.xml";
 
     private final MavenSettingsPluginExtension extension;
 
-    public LocalMavenSettingsLoader(MavenSettingsPluginExtension extension) {
+    LocalMavenSettingsLoader(MavenSettingsPluginExtension extension) {
         this.extension = extension;
     }
 

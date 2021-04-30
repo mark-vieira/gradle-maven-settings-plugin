@@ -31,7 +31,7 @@ class MavenSettingsPluginTest extends AbstractMavenSettingsTest {
     @Test
     void applyMavenSettingsPlugin() {
         project.with {
-            apply plugin: 'net.linguica.maven-settings'
+            apply plugin: 'org.bonitasoft.maven-settings'
         }
 
         assertTrue(project.plugins.hasPlugin(MavenSettingsPlugin.class))
