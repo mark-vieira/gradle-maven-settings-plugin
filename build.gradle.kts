@@ -1,25 +1,6 @@
 plugins {
-    groovy
-    `java-gradle-plugin`
-    maven
-    `maven-publish`
-    id("com.gradle.plugin-publish") version "0.10.1"
-}
-
-publishing {
-    publications {
-        create<MavenPublication>("maven") {
-            groupId = project.group as String?
-            artifactId = "maven-settings"
-            version = project.version as String?
-
-            from(components["java"])
-        }
-    }
-
-    repositories {
-        mavenLocal()
-    }
+    id("com.gradle.plugin-publish") version "0.14.0"
+    `groovy-gradle-plugin`
 }
 
 repositories {
@@ -36,15 +17,15 @@ dependencies {
     implementation("org.apache.maven:maven-model-builder:${mavenVersion}")
     implementation("org.apache.maven:maven-model:${mavenVersion}")
     implementation("org.apache.maven:maven-core:${mavenVersion}")
-    implementation("org.sonatype.plexus:plexus-cipher:1.4")
-    implementation("org.sonatype.plexus:plexus-sec-dispatcher:1.3")
-    testImplementation("junit:junit:4.11")
-    testImplementation("org.hamcrest:hamcrest-library:1.3")
+    implementation("org.sonatype.plexus:plexus-cipher:1.7")
+    implementation("org.sonatype.plexus:plexus-sec-dispatcher:1.4")
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.hamcrest:hamcrest-library:2.2")
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_1_6
-    targetCompatibility = JavaVersion.VERSION_1_6
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
 }
 
 pluginBundle {
