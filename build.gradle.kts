@@ -21,7 +21,7 @@ dependencies {
     implementation("org.sonatype.plexus:plexus-cipher:1.7")
     implementation("org.sonatype.plexus:plexus-sec-dispatcher:1.4")
     testImplementation("junit:junit:4.13.2")
-    testImplementation("org.hamcrest:hamcrest-library:2.2")
+    testImplementation("org.assertj:assertj-core:3.19.0")
 }
 
 java {
