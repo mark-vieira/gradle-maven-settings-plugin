@@ -5,29 +5,25 @@ configuration located in [settings files](http://maven.apache.org/settings.html)
 projects to continue to leverage functionality provided by Maven such as mirrors as well use existing
 settings configuration to store encrypted repository authentication credentials.
 
+*This plugin is forked from [mark-vieira/gradle-maven-settings-plugin](https://github.com/mark-vieira/gradle-maven-settings-plugin) 
+in order to have a version that will be maintained more regularly. Feel free to contribute here.*
+
 ## Usage
 This plugin is hosted on the [Gradle Plugin Portal](https://plugins.gradle.org/plugin/net.linguica.maven-settings).
 To use the plugin, add the following to your `build.gradle` file.
-    
-    plugins {
-      id 'net.linguica.maven-settings' version '0.6'
-    }
-    
-For Gradle 2.0 or earlier you must add the following:
-    
-    buildscript {
-        repositories {
-            maven {
-                url 'https://plugins.gradle.org/m2/'
-            }
-        }
-        
-        dependencies {
-            classpath 'net.linguica.gradle:maven-settings-plugin:0.6'
-        }
-    }
 
-    apply plugin: 'net.linguica.maven-settings'
+### groovy
+```groovy
+    plugins {
+      id "org.bonitasoft.maven-settings" version "0.7.0"
+    }
+```
+### kotlin
+```kotlin
+    plugins {
+        id("org.bonitasoft.maven-settings") version "0.14.0"
+    }
+```
 
 ## Mirrors
 The plugin exposes Maven-like mirror capabilities. The plugin will properly register and enforce any 
@@ -41,13 +37,14 @@ all repositories except for the repository with the name 'myRepo'.
 The plugin will attempt to apply credentials located in `<server>` elements to appropriate Maven repository 
 definitions in your build script. This is done by matching the `<id>` element in the `settings.xml` file to the `name`
 property of the repository definition.
-
-    repositories {
-        maven {
-            name = 'myRepo' // should match <id>myRepo</id> of appropriate <server> in settings.xml
-            url = 'https://intranet.foo.org/repo'
-        }
+```groovy
+repositories {
+    maven {
+        name = 'myRepo' // should match <id>myRepo</id> of appropriate <server> in settings.xml
+        url = 'https://intranet.foo.org/repo'
     }
+}
+```
 
 Server credentials are used for mirrors as well. When mirrors are added the plugin will look for a `<server>` element 
 with the same `<id>` and the configured credentials are used and [decrypted](http://maven.apache.org/guides/mini/guide-encryption.html) 
@@ -56,15 +53,16 @@ if necessary.
 ### Publishing
 The plugin will also attempt to apply credentials to repositories configured using the 
 ['maven-publish'](https://docs.gradle.org/current/userguide/publishing_maven.html) plugin.
-
-    publishing {
-        repositories {
-            maven {
-                name = 'myRepo' // should match <id>myRepo</id> of appropriate <server> in settings.xml
-                url = 'https://intranet.foo.org/repo/repositories/releases'
-            }
+```groovy
+publishing {
+    repositories {
+        maven {
+            name = 'myRepo' // should match <id>myRepo</id> of appropriate <server> in settings.xml
+            url = 'https://intranet.foo.org/repo/repositories/releases'
         }
     }
+}
+```
     
 
 ### Supported Types
