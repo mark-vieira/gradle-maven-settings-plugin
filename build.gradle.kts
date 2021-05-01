@@ -1,6 +1,7 @@
 plugins {
     id("com.gradle.plugin-publish") version "0.14.0"
     `groovy-gradle-plugin`
+    kotlin("jvm") version "1.4.32"
 }
 
 repositories {
