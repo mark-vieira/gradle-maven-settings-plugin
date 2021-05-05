@@ -1,4 +1,4 @@
-package org.bonitasoft.gradle.maven.settings
+package com.bonitasoft.gradle.maven.settings
 
 import org.apache.maven.settings.Settings
 import org.apache.maven.settings.building.*

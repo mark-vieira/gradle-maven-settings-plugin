@@ -30,13 +30,18 @@ java {
 }
 
 pluginBundle {
-    website = "https://github.com/acidbee/gradle-maven-settings-plugin"
-    vcsUrl = "https://github.com/acidbee/gradle-maven-settings-plugin"
-    description = "Gradle plugin for exposing Maven settings file configuration to Gradle project."
+    website = "https://github.com/bonitasoft-labs/gradle-maven-settings-plugin"
+    vcsUrl = "https://github.com/bonitasoft-labs/gradle-maven-settings-plugin"
+    description = """
+        | Gradle plugin for exposing Maven settings file configuration to Gradle project.
+        |
+        | This project is forked from https://github.com/mark-vieira/gradle-maven-settings-plugin
+        | And will add more support of the `settings.xml` file (repositories in profiles)
+    """.trimMargin()
     tags = listOf("settings", "maven")
 
     mavenCoordinates {
-        groupId = "org.bonitasoft.gradle"
+        groupId = "com.bonitasoft.gradle"
         artifactId = "maven-settings-plugin"
     }
 }
@@ -44,9 +49,9 @@ pluginBundle {
 gradlePlugin {
     plugins {
         create("mavenSettings") {
-            id = "org.bonitasoft.maven-settings"
+            id = "com.bonitasoft.gradle.maven-settings"
             displayName = "Maven Settings Plugin"
-            implementationClass = "org.bonitasoft.gradle.maven.settings.MavenSettingsPlugin"
+            implementationClass = "com.bonitasoft.gradle.maven.settings.MavenSettingsPlugin"
         }
     }
 }

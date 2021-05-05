@@ -1,4 +1,4 @@
-package org.bonitasoft.gradle.maven.settings
+package com.bonitasoft.gradle.maven.settings
 
 import org.apache.maven.settings.Mirror
 import org.apache.maven.settings.Profile
@@ -60,7 +60,7 @@ class MavenSettingsPluginTest {
     }
 
     fun applyPlugin(pluginConfiguration: MavenSettingsPluginExtension.() -> Unit) {
-        project.pluginManager.apply("org.bonitasoft.maven-settings")
+        project.pluginManager.apply("com.bonitasoft.gradle.maven-settings")
 
         project.extensions.configure(MavenSettingsPluginExtension::class.java) {
             it.userSettingsFileName = settingsFile.canonicalPath
@@ -72,7 +72,7 @@ class MavenSettingsPluginTest {
     @Test
     fun `should apply plugin using it's id`() {
 
-        project.pluginManager.apply("org.bonitasoft.maven-settings")
+        project.pluginManager.apply("com.bonitasoft.gradle.maven-settings")
 
         assertThat(project.plugins.hasPlugin(MavenSettingsPlugin::class.java)).isTrue
     }

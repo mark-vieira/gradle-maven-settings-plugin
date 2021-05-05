@@ -1,4 +1,4 @@
-package org.bonitasoft.gradle.maven.settings
+package com.bonitasoft.gradle.maven.settings
 
 import org.gradle.api.Project
 import java.io.File
