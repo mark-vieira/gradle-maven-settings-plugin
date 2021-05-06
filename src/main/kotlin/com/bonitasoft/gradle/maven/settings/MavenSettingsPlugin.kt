@@ -17,6 +17,7 @@ import org.gradle.api.artifacts.ArtifactRepositoryContainer
 import org.gradle.api.artifacts.dsl.RepositoryHandler
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository
 import org.gradle.api.credentials.HttpHeaderCredentials
+import org.gradle.api.logging.Logger
 import org.gradle.api.plugins.ExtraPropertiesExtension
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.authentication.http.HttpHeaderAuthentication
@@ -31,19 +32,20 @@ class MavenSettingsPlugin : Plugin<Project> {
     lateinit var settings: Settings
 
     override fun apply(project: Project) {
+        val logger = project.logger
         val extension = project.extensions.create(EXTENSION_NAME, MavenSettingsPluginExtension::class.java, project)
 
         project.afterEvaluate {
-            loadSettings(extension)
+            loadSettings(extension, logger)
             activateProfiles(project, extension)
             registerMirrors(project)
-            applyRepoCredentials(project.repositories)
-            applyRepoCredentials(project.extensions.findByType(PublishingExtension::class.java)?.repositories)
+            applyRepoCredentials(project, project.repositories)
+            applyRepoCredentials(project, project.extensions.findByType(PublishingExtension::class.java)?.repositories)
         }
     }
 
-    private fun loadSettings(extension: MavenSettingsPluginExtension) {
-        val settingsLoader = LocalMavenSettingsLoader(extension)
+    private fun loadSettings(extension: MavenSettingsPluginExtension, logger: Logger) {
+        val settingsLoader = LocalMavenSettingsLoader(extension, logger)
         try {
             settings = settingsLoader.loadSettings()
         } catch (e: SettingsBuildingException) {
@@ -99,12 +101,12 @@ class MavenSettingsPlugin : Plugin<Project> {
         }
     }
 
-    private fun applyRepoCredentials(repositories: RepositoryHandler?) {
+    private fun applyRepoCredentials(project: Project, repositories: RepositoryHandler?) {
         repositories?.all { repo ->
             if (repo is MavenArtifactRepository) {
                 settings.servers.forEach { server ->
                     if (repo.name == server.id) {
-                        addCredentials(server, repo)
+                        addCredentials(project, server, repo)
                     }
                 }
             }
@@ -131,12 +133,12 @@ class MavenSettingsPlugin : Plugin<Project> {
             project.repositories.maven { repo ->
                 repo.name = mirror.name ?: mirror.id
                 repo.url = URI.create(mirror.url)
-                addCredentials(server, repo)
+                addCredentials(project, server, repo)
             }
         }
     }
 
-    private fun addCredentials(server: Server?, repo: MavenArtifactRepository) {
+    private fun addCredentials(project: Project, server: Server?, repo: MavenArtifactRepository) {
         if (server?.username != null && server.password != null) {
             repo.credentials {
                 it.username = server.username

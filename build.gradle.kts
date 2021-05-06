@@ -22,6 +22,7 @@ dependencies {
     implementation("org.sonatype.plexus:plexus-sec-dispatcher:1.4")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.assertj:assertj-core:3.19.0")
+    testImplementation("com.github.stefanbirkner:system-rules:1.19.0")
 }
 
 java {

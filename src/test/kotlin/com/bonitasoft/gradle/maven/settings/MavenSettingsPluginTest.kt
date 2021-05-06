@@ -5,8 +5,8 @@ import org.apache.maven.settings.Profile
 import org.apache.maven.settings.Server
 import org.apache.maven.settings.Settings
 import org.apache.maven.settings.io.DefaultSettingsWriter
-import org.codehaus.plexus.util.xml.Xpp3DomBuilder
 import org.assertj.core.api.Assertions.assertThat
+import org.codehaus.plexus.util.xml.Xpp3DomBuilder
 import org.gradle.api.Project
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository
 import org.gradle.api.credentials.HttpHeaderCredentials
@@ -15,7 +15,10 @@ import org.gradle.api.publish.PublishingExtension
 import org.gradle.testfixtures.ProjectBuilder
 import org.junit.After
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
+import org.junit.contrib.java.lang.system.EnvironmentVariables
+import org.junit.contrib.java.lang.system.SystemOutRule
 import java.io.File
 
 class MavenSettingsPluginTest {
@@ -24,8 +27,12 @@ class MavenSettingsPluginTest {
     val settingsFile = File(settingsDir, "settings.xml")
     lateinit var project: Project
 
+    @Rule @JvmField
+    var envVar = EnvironmentVariables()
+
     @Before
     fun createSettingsXml() {
+        envVar.set("MY_TOKEN", "secret_from_env")
         settingsFile
         project = ProjectBuilder.builder().build()
     }
@@ -296,6 +303,56 @@ class MavenSettingsPluginTest {
         assertThat((project.repositories.getByName("central") as MavenArtifactRepository).credentials).satisfies {
             assertThat(it.username).isEqualTo("first.last")
             assertThat(it.password).isEqualTo("secret")
+        }
+    }
+
+
+    @Test
+    fun `should set credentials when evaluated from environment`() {
+        withSettings {
+            server { id = "some.custom.repo"; username = "customUser"; password = "\${env.MY_TOKEN}" }
+        }
+
+
+        project.run {
+            repositories.apply {
+                maven {
+                    it.name = "some.custom.repo"
+                    it.url = uri("https://repo1.maven.org/maven2/")
+                }
+            }
+        }
+
+        applyPlugin()
+
+        assertThat((project.repositories.getByName("some.custom.repo") as MavenArtifactRepository).credentials).satisfies {
+            assertThat(it.username).isEqualTo("customUser")
+            assertThat(it.password).isEqualTo("secret_from_env")
+        }
+    }
+
+
+    @Test
+    fun `should not fail the build when missing credentials when evaluated from environment`() {
+        withSettings {
+            server { id = "some.custom.repo"; username = "customUser"; password = "\${env.MY_UNKNOWN_TOKEN}" }
+        }
+
+
+        project.run {
+            repositories.apply {
+                maven {
+                    it.name = "some.custom.repo"
+                    it.url = uri("https://repo1.maven.org/maven2/")
+                }
+            }
+        }
+
+        applyPlugin()
+
+        assertThat((project.repositories.getByName("some.custom.repo") as MavenArtifactRepository).credentials).satisfies {
+            assertThat(it.username).isEqualTo("customUser")
+            assertThat(it.password).isEqualTo("\${env.MY_UNKNOWN_TOKEN}")
         }
     }
 
