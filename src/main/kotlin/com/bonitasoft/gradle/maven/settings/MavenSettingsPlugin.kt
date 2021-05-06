@@ -1,5 +1,6 @@
 package com.bonitasoft.gradle.maven.settings
 
+import org.apache.maven.model.Profile
 import org.apache.maven.model.path.DefaultPathTranslator
 import org.apache.maven.model.profile.DefaultProfileActivationContext
 import org.apache.maven.model.profile.DefaultProfileSelector
@@ -66,9 +67,32 @@ class MavenSettingsPlugin : Plugin<Project> {
         if (extension.exportGradleProps) {
             activationContext.userProperties = project.properties.mapValues { e -> e.value.toString() }
         }
-        profileSelector.getActiveProfiles(settings.profiles.map { SettingsUtils.convertFromSettingsProfile(it) }.toList(), activationContext, { }).forEach { profile ->
-            for (entry in profile.properties) {
-                project.extensions.getByType(ExtraPropertiesExtension::class.java).set(entry.key.toString(), entry.value.toString())
+        profileSelector.getActiveProfiles(settings.profiles.map { SettingsUtils.convertFromSettingsProfile(it) }.toList(), activationContext) { }.forEach { profile ->
+            applyProfile(profile, project)
+        }
+    }
+
+    private fun applyProfile(profile: Profile, project: Project) {
+        project.logger.info("Applying maven profile ${profile.id}")
+        for (entry in profile.properties) {
+            project.logger.info("Applying property ${entry.key}")
+            project.extensions.getByType(ExtraPropertiesExtension::class.java).set(entry.key.toString(), entry.value.toString())
+            project.logger.debug("Property applied with value ${entry.value}")
+        }
+        for (repo in profile.repositories) {
+            project.repositories.maven {
+                it.name = repo.id
+                it.url = URI(repo.url)
+                if (repo.releases != null) {
+                    it.mavenContent { content ->
+                        if (repo.releases.isEnabled && !repo.snapshots.isEnabled) {
+                            content.releasesOnly()
+                        }
+                        if (repo.releases.isEnabled && !repo.snapshots.isEnabled) {
+                            content.snapshotsOnly()
+                        }
+                    }
+                }
             }
         }
     }
@@ -106,7 +130,7 @@ class MavenSettingsPlugin : Plugin<Project> {
             if (repo is MavenArtifactRepository) {
                 settings.servers.forEach { server ->
                     if (repo.name == server.id) {
-                        addCredentials(project, server, repo)
+                        addCredentials(server, repo)
                     }
                 }
             }
@@ -133,12 +157,12 @@ class MavenSettingsPlugin : Plugin<Project> {
             project.repositories.maven { repo ->
                 repo.name = mirror.name ?: mirror.id
                 repo.url = URI.create(mirror.url)
-                addCredentials(project, server, repo)
+                addCredentials(server, repo)
             }
         }
     }
 
-    private fun addCredentials(project: Project, server: Server?, repo: MavenArtifactRepository) {
+    private fun addCredentials(server: Server?, repo: MavenArtifactRepository) {
         if (server?.username != null && server.password != null) {
             repo.credentials {
                 it.username = server.username

@@ -1,14 +1,13 @@
 package com.bonitasoft.gradle.maven.settings
 
-import org.apache.maven.settings.Mirror
-import org.apache.maven.settings.Profile
-import org.apache.maven.settings.Server
+import org.apache.maven.settings.RepositoryPolicy
 import org.apache.maven.settings.Settings
 import org.apache.maven.settings.io.DefaultSettingsWriter
 import org.assertj.core.api.Assertions.assertThat
 import org.codehaus.plexus.util.xml.Xpp3DomBuilder
 import org.gradle.api.Project
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository
+import org.gradle.api.artifacts.repositories.MavenRepositoryContentDescriptor
 import org.gradle.api.credentials.HttpHeaderCredentials
 import org.gradle.api.internal.project.DefaultProject
 import org.gradle.api.publish.PublishingExtension
@@ -18,13 +17,12 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.contrib.java.lang.system.EnvironmentVariables
-import org.junit.contrib.java.lang.system.SystemOutRule
 import java.io.File
+import java.nio.file.Paths
 
 class MavenSettingsPluginTest {
 
-    val settingsDir = File("build/tmp/.m2/")
-    val settingsFile = File(settingsDir, "settings.xml")
+    val settingsFile = Paths.get("build", "tmp", ".m2", "settings.xml").toFile()
     lateinit var project: Project
 
     @Rule @JvmField
@@ -33,7 +31,6 @@ class MavenSettingsPluginTest {
     @Before
     fun createSettingsXml() {
         envVar.set("MY_TOKEN", "secret_from_env")
-        settingsFile
         project = ProjectBuilder.builder().build()
     }
 
@@ -46,18 +43,6 @@ class MavenSettingsPluginTest {
         val settings = Settings()
         configureClosure.invoke(settings)
         DefaultSettingsWriter().write(settingsFile, null, settings)
-    }
-
-    fun Settings.mirror(config: Mirror.() -> Unit) {
-        this.mirrors.add(Mirror().apply(config))
-    }
-
-    fun Settings.profile(config: Profile.() -> Unit) {
-        this.profiles.add(Profile().apply(config))
-    }
-
-    fun Settings.server(config: Server.() -> Unit) {
-        this.servers.add(Server().apply(config))
     }
 
     fun applyPlugin() {
@@ -78,8 +63,9 @@ class MavenSettingsPluginTest {
 
     @Test
     fun `should apply plugin using it's id`() {
-
         project.pluginManager.apply("com.bonitasoft.gradle.maven-settings")
+
+        (project as DefaultProject).evaluate()
 
         assertThat(project.plugins.hasPlugin(MavenSettingsPlugin::class.java)).isTrue
     }
@@ -433,6 +419,74 @@ class MavenSettingsPluginTest {
         assertThat(project.extensions.getByType(PublishingExtension::class.java).repositories.getByName("central") as MavenArtifactRepository).satisfies {
             assertThat(it.credentials.username).isEqualTo("first.last")
             assertThat(it.credentials.password).isEqualTo("secret")
+        }
+    }
+
+    @Test
+    fun `should add repositories`() {
+        withSettings {
+            profile {
+                id = "profile1"
+                repository {
+                    id = "repoFromProfile1"
+                    url = "http://maven.repo1.com"
+                    releases = RepositoryPolicy().apply {
+                        isEnabled = false
+                    }
+                }
+            }
+            profile {
+                id = "profile2"
+                repository {
+                    id = "repoFromProfile2"
+                    url = "http://maven.repo2.com"
+                }
+            }
+            profile {
+                id = "profile3"
+                repository {
+                    id = "repoFromProfile3"
+                    url = "http://maven.repo3.com"
+                }
+            }
+            server {
+                id = "repoFromProfile2"
+                username = "myUser"
+                password = "myPassword"
+            }
+            activeProfiles = listOf("profile1", "profile2")
+        }
+        project.run {
+            pluginManager.apply("maven-publish")
+            repositories.apply {
+                mavenLocal()
+                mavenCentral()
+                maven {
+                    it.name = "custom1"
+                    it.url = uri("https://maven.custom.com")
+                }
+            }
+        }
+
+        applyPlugin()
+
+        //No profile 3, profile is not activated
+        assertThat(project.repositories.names).containsOnly("repoFromProfile1", "repoFromProfile2", "MavenLocal", "MavenRepo", "custom1")
+        assertThat(project.repositories.map { (it as MavenArtifactRepository).url.toString() }).contains(
+                "https://repo.maven.apache.org/maven2/",
+                "https://maven.custom.com",
+                "http://maven.repo1.com",
+                "http://maven.repo2.com"
+        )
+        //credentials are still applied
+        assertThat(project.repositories.getByName("repoFromProfile1") as MavenArtifactRepository).satisfies {
+            it.content {
+                assertThat((it as MavenRepositoryContentDescriptor).snapshotsOnly())
+            }
+        }
+        assertThat(project.repositories.getByName("repoFromProfile2") as MavenArtifactRepository).satisfies {
+            assertThat(it.credentials.username).isEqualTo("myUser")
+            assertThat(it.credentials.password).isEqualTo("myPassword")
         }
     }
 }

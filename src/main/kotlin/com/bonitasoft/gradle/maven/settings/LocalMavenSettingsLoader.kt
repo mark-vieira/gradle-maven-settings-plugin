@@ -1,5 +1,6 @@
 package com.bonitasoft.gradle.maven.settings
 
+import org.apache.maven.settings.DefaultMavenSettingsBuilder
 import org.apache.maven.settings.Server
 import org.apache.maven.settings.Settings
 import org.apache.maven.settings.building.DefaultSettingsBuilderFactory
@@ -10,11 +11,14 @@ import org.sonatype.plexus.components.cipher.DefaultPlexusCipher
 import org.sonatype.plexus.components.sec.dispatcher.DefaultSecDispatcher.SYSTEM_PROPERTY_SEC_LOCATION
 import org.sonatype.plexus.components.sec.dispatcher.SecUtil
 import java.io.File
+import java.nio.file.Paths
+import kotlin.math.log
 
 
 class LocalMavenSettingsLoader(private val extension: MavenSettingsPluginExtension, private val logger: Logger) {
-    private val globalSettingsFile = File(System.getenv("M2_HOME"), "conf/settings.xml")
-    private val settingsSecurityFile = File(System.getProperty("user.home") + "/.m2/settings-security.xml")
+    //This configuration file is the one inside the maven installation
+    private val globalSettingsFile = File(System.getenv("M2_HOME").orEmpty()).toPath().resolve("conf").resolve("settings.xml")
+    private val settingsSecurityFile = File(System.getProperty("user.home").orEmpty()).resolve(".m2").resolve("settings-security.xm")
     private val cipher = DefaultPlexusCipher()
 
 
@@ -25,12 +29,25 @@ class LocalMavenSettingsLoader(private val extension: MavenSettingsPluginExtensi
      * @return Effective settings
      * @throws SettingsBuildingException If the effective settings cannot be built
      */
-    fun loadSettings(): Settings =
-            DefaultSettingsBuilderFactory().newInstance().build(DefaultSettingsBuildingRequest().apply {
-                userSettingsFile = extension.getUserSettingsFile()
-                globalSettingsFile = this@LocalMavenSettingsLoader.globalSettingsFile
-                systemProperties = System.getProperties()
-            }).effectiveSettings.decryptCredentials()
+    fun loadSettings(): Settings {
+        val settingsBuildingResult = DefaultSettingsBuilderFactory().newInstance().build(DefaultSettingsBuildingRequest().apply {
+            userSettingsFile = extension.getUserSettingsFile()
+            globalSettingsFile = this@LocalMavenSettingsLoader.globalSettingsFile.toFile()
+            systemProperties = System.getProperties()
+            if (globalSettingsFile.exists()) {
+                logger.info("Using maven global settings.xml: ${globalSettingsFile.absolutePath}")
+            }
+            if (userSettingsFile.exists()) {
+                logger.info("Using maven user settings.xml does not exists: ${userSettingsFile.absolutePath}")
+            } else {
+                logger.info("No maven user settings.xml does not exists: ${userSettingsFile.absolutePath}")
+            }
+        })
+        settingsBuildingResult.problems.forEach {
+            logger.warn("Maven: $it")
+        }
+        return settingsBuildingResult.effectiveSettings.decryptCredentials()
+    }
 
     private fun Settings.decryptCredentials(): Settings {
         try {
