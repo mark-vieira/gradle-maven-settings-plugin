@@ -96,6 +96,38 @@ class MavenSettingsPluginTest {
     }
 
     @Test
+    fun `should mirror repo and add credentials`() {
+        withSettings {
+            mirror {
+                id = "myRepo"
+                mirrorOf = "*"
+                url = "http://maven.foo.bar"
+            }
+            server {
+                id = "myRepo"
+                username = "myUser"
+                password = "myPassword"
+            }
+        }
+
+
+        project.run {
+            repositories.apply {
+                mavenCentral()
+            }
+        }
+
+        applyPlugin()
+
+
+        assertThat(project.repositories).hasSize(1).first().satisfies {
+            assertThat(it.name).isEqualTo("myRepo")
+            assertThat((it as MavenArtifactRepository).credentials.username).isEqualTo("myUser")
+            assertThat(it.credentials.password).isEqualTo("myPassword")
+        }
+    }
+
+    @Test
     fun `should mirror all repo excluding the ones specified`() {
         withSettings {
             mirror {
@@ -181,7 +213,7 @@ class MavenSettingsPluginTest {
     }
 
     @Test
-    fun `should miror only central repo`() {
+    fun `should mirror only central repo`() {
         withSettings {
             mirror {
                 id = "myRepo"
@@ -423,7 +455,7 @@ class MavenSettingsPluginTest {
     }
 
     @Test
-    fun `should add repositories`() {
+    fun `should add repositories from active profiles`() {
         withSettings {
             profile {
                 id = "profile1"
@@ -487,6 +519,38 @@ class MavenSettingsPluginTest {
         assertThat(project.repositories.getByName("repoFromProfile2") as MavenArtifactRepository).satisfies {
             assertThat(it.credentials.username).isEqualTo("myUser")
             assertThat(it.credentials.password).isEqualTo("myPassword")
+        }
+    }
+
+
+    @Test
+    fun `mirrors should override repositories from profiles`() {
+        withSettings {
+            profile {
+                id = "profile1"
+                repository {
+                    id = "repoFromProfile1"
+                    url = "http://maven.repo1.com"
+                }
+            }
+            mirror {
+                id = "mirror"
+                url = "http://maven.mirror.com"
+                mirrorOf = "*"
+            }
+            activeProfiles = listOf("profile1")
+        }
+        project.run {
+            repositories.apply {
+                mavenCentral()
+            }
+        }
+
+        applyPlugin()
+
+        //No profile 3, profile is not activated
+        assertThat(project.repositories).hasSize(1).first().satisfies {
+            assertThat(it.name).isEqualTo("mirror")
         }
     }
 }

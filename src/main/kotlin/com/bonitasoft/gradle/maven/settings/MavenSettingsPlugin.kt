@@ -1,6 +1,7 @@
 package com.bonitasoft.gradle.maven.settings
 
 import org.apache.maven.model.Profile
+import org.apache.maven.model.Repository
 import org.apache.maven.model.path.DefaultPathTranslator
 import org.apache.maven.model.profile.DefaultProfileActivationContext
 import org.apache.maven.model.profile.DefaultProfileSelector
@@ -16,6 +17,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.ArtifactRepositoryContainer
 import org.gradle.api.artifacts.dsl.RepositoryHandler
+import org.gradle.api.artifacts.repositories.ArtifactRepository
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository
 import org.gradle.api.credentials.HttpHeaderCredentials
 import org.gradle.api.logging.Logger
@@ -25,6 +27,7 @@ import org.gradle.authentication.http.HttpHeaderAuthentication
 import java.net.InetAddress
 import java.net.NetworkInterface
 import java.net.URI
+import java.util.function.Predicate
 
 const val EXTENSION_NAME = "mavenSettings"
 
@@ -67,7 +70,9 @@ class MavenSettingsPlugin : Plugin<Project> {
         if (extension.exportGradleProps) {
             activationContext.userProperties = project.properties.mapValues { e -> e.value.toString() }
         }
-        profileSelector.getActiveProfiles(settings.profiles.map { SettingsUtils.convertFromSettingsProfile(it) }.toList(), activationContext) { }.forEach { profile ->
+        val activeProfiles = profileSelector.getActiveProfiles(settings.profiles.map { SettingsUtils.convertFromSettingsProfile(it) }.toList(), activationContext) { }
+        project.logger.info("Active maven profiles: ${activeProfiles?.map { it.id }}")
+        activeProfiles.forEach { profile ->
             applyProfile(profile, project)
         }
     }
@@ -81,47 +86,65 @@ class MavenSettingsPlugin : Plugin<Project> {
         }
         for (repo in profile.repositories) {
             project.repositories.maven {
-                it.name = repo.id
-                it.url = URI(repo.url)
-                if (repo.releases != null) {
-                    it.mavenContent { content ->
-                        if (repo.releases.isEnabled && !repo.snapshots.isEnabled) {
-                            content.releasesOnly()
-                        }
-                        if (repo.releases.isEnabled && !repo.snapshots.isEnabled) {
-                            content.snapshotsOnly()
-                        }
-                    }
+                configureMavenRepo(it, repo)
+                project.logger.info("Imported repository ${it.name} from active profile ${profile.id} configured in maven's settings.xml")
+            }
+        }
+    }
+
+    private fun configureMavenRepo(gradleRepository: MavenArtifactRepository, mavenRepository: Repository) {
+        gradleRepository.name = mavenRepository.id
+        gradleRepository.url = URI(mavenRepository.url)
+        if (mavenRepository.releases != null) {
+            gradleRepository.mavenContent { content ->
+                if (mavenRepository.releases.isEnabled && !mavenRepository.snapshots.isEnabled) {
+                    content.releasesOnly()
+                }
+                if (mavenRepository.releases.isEnabled && !mavenRepository.snapshots.isEnabled) {
+                    content.snapshotsOnly()
                 }
             }
         }
     }
 
+    private fun ArtifactRepository.getMirror(settings: Settings): Mirror? {
+        return settings.mirrors.firstOrNull { mirror ->
+            var canMatch = false
+            for (mirrorOf in mirror.mirrorOf.split(",")) {
+                when (mirrorOf) {
+                    "*" -> canMatch = true
+                    "central" -> canMatch = this is MavenArtifactRepository && this.url.toString() == ArtifactRepositoryContainer.MAVEN_CENTRAL_URL
+                    "external:*" -> canMatch =
+                            (this is MavenArtifactRepository
+                                    && this.url.scheme != "file"
+                                    && !InetAddress.getByName(this.url.host).run { isLoopbackAddress || NetworkInterface.getByInetAddress(this) != null })
+                    "!$name" -> return@firstOrNull false
+                    name -> return@firstOrNull true
+                    else -> continue
+                }
+            }
+            return@firstOrNull canMatch
+        }
+    }
+
     private fun registerMirrors(project: Project) {
-        val globalMirror: Mirror? = settings.mirrors.firstOrNull { it.mirrorOf.split(",").contains("*") }
-        if (globalMirror != null) {
-            project.logger.info("Found global mirror in settings.xml. Replacing Maven repositories with mirror located at ${globalMirror.url}")
-            createMirrorRepository(project, globalMirror)
-            return
-        }
-
-        val externalMirror: Mirror? = settings.mirrors.firstOrNull { it.mirrorOf.split(",").contains("external:*") }
-        if (externalMirror != null) {
-            project.logger.info("Found external mirror in settings.xml. Replacing non-local Maven repositories with mirror located at ${externalMirror.url}")
-            createMirrorRepository(project, externalMirror) {
-                val host = InetAddress.getByName(it.url.host)
-                // only match repositories not on localhost and not file based
-                it.url.scheme != "file" && !(host.isLoopbackAddress || NetworkInterface.getByInetAddress(host) != null)
+        project.repositories.toList().filter { repo ->
+            if (repo.name.equals(ArtifactRepositoryContainer.DEFAULT_MAVEN_LOCAL_REPO_NAME)) {
+                return@filter false
             }
-            return
-        }
-
-        val centralMirror: Mirror? = settings.mirrors.firstOrNull { it.mirrorOf.split(",").contains("central") }
-        if (centralMirror != null) {
-            project.logger.info("Found central mirror in settings.xml. Replacing Maven Central repository with mirror located at ${centralMirror.url}")
-            createMirrorRepository(project, centralMirror) { it ->
-                ArtifactRepositoryContainer.MAVEN_CENTRAL_URL.startsWith(it.url.toString())
-            }
+            repo.getMirror(settings)?.also { mirror ->
+                if (!project.repositories.names.contains(mirror.id)) {
+                    project.repositories.maven { repo ->
+                        repo.name = mirror.id
+                        repo.url = URI.create(mirror.url)
+                        project.logger.info("Replaced '${repo.name}' with mirror ${mirror.id} configured in maven's settings.xml")
+                    }
+                } else {
+                    project.logger.info("Replaced '${repo.name}' with mirror ${mirror.id} (already created) configured in maven's settings.xml")
+                }
+            } != null
+        }.forEach {
+            project.repositories.remove(it)
         }
     }
 
@@ -130,7 +153,7 @@ class MavenSettingsPlugin : Plugin<Project> {
             if (repo is MavenArtifactRepository) {
                 settings.servers.forEach { server ->
                     if (repo.name == server.id) {
-                        addCredentials(server, repo)
+                        addCredentials(project, server, repo)
                     }
                 }
             }
@@ -141,33 +164,37 @@ class MavenSettingsPlugin : Plugin<Project> {
         createMirrorRepository(project, mirror) { true }
     }
 
-    private fun createMirrorRepository(project: Project, mirror: Mirror, predicate: (MavenArtifactRepository) -> Boolean) {
-        var mirrorFound = false
-        val excludedRepositoryNames: List<String> = mirror.mirrorOf.split(",").filter { it.startsWith("!") }.map { it.substring(1) }
-        project.repositories.all { repo ->
-            if (repo is MavenArtifactRepository && repo.name != ArtifactRepositoryContainer.DEFAULT_MAVEN_LOCAL_REPO_NAME
-                    && (repo.url != URI.create(mirror.url)) && predicate(repo) && !excludedRepositoryNames.contains(repo.getName())) {
-                project.repositories.remove(repo)
-                mirrorFound = true
-            }
-        }
 
-        if (mirrorFound) {
-            val server = settings.getServer(mirror.id)
+    private fun createMirrorRepository(project: Project, mirror: Mirror, predicate: (MavenArtifactRepository) -> Boolean) {
+        var replaceAll = true
+        var replaceExternal = true
+
+
+        val excludedRepositoryNames: List<String> = mirror.mirrorOf.split(",").filter { it.startsWith("!") }.map { it.substring(1) }
+        val removedRepositories = mutableListOf<String>()
+        if (project.repositories.removeIf {
+                    if (it is MavenArtifactRepository && it.name != ArtifactRepositoryContainer.DEFAULT_MAVEN_LOCAL_REPO_NAME
+                            && predicate(it) && !excludedRepositoryNames.contains(it.getName())) {
+                        removedRepositories.add(it.name)
+                        return@removeIf true
+                    }
+                    return@removeIf false
+                }) {
             project.repositories.maven { repo ->
-                repo.name = mirror.name ?: mirror.id
+                repo.name = mirror.id
                 repo.url = URI.create(mirror.url)
-                addCredentials(server, repo)
+                project.logger.info("Replaced repositories $removedRepositories with mirror ${mirror.id} configured in maven's settings.xml")
             }
         }
     }
 
-    private fun addCredentials(server: Server?, repo: MavenArtifactRepository) {
+    private fun addCredentials(project: Project, server: Server?, repo: MavenArtifactRepository) {
         if (server?.username != null && server.password != null) {
             repo.credentials {
                 it.username = server.username
                 it.password = server.password
             }
+            project.logger.info("Added credentials '${server.username}' on repository ${repo.name} configured in maven's settings.xml")
         } else if (server?.configuration != null) {
             val dom = server.configuration as Xpp3Dom
             val headers = dom.getChild("httpHeaders").getChildren("property")
@@ -182,6 +209,7 @@ class MavenSettingsPlugin : Plugin<Project> {
                 repo.credentials(HttpHeaderCredentials::class.java) {
                     it.name = credName
                     it.value = credPassword
+                    project.logger.info("Added credentials '$credName' in headers on repository ${repo.name} configured in maven's settings.xml")
                 }
             }
             repo.authentication.create("header", HttpHeaderAuthentication::class.java)
