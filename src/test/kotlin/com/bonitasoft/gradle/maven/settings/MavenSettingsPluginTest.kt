@@ -17,16 +17,24 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.contrib.java.lang.system.EnvironmentVariables
+import org.junit.contrib.java.lang.system.RestoreSystemProperties
 import java.io.File
 import java.nio.file.Paths
 
 class MavenSettingsPluginTest {
 
     val settingsFile = Paths.get("build", "tmp", ".m2", "settings.xml").toFile()
+    val securitySettings = Paths.get("build", "tmp", ".m2", "settings-security.xml").toFile()
     lateinit var project: Project
 
-    @Rule @JvmField
+    @Rule
+    @JvmField
     var envVar = EnvironmentVariables()
+
+
+    @Rule
+    @JvmField
+    var restoreSystemProperties = RestoreSystemProperties()
 
     @Before
     fun createSettingsXml() {
@@ -37,6 +45,7 @@ class MavenSettingsPluginTest {
     @After
     fun deleteSettingsXml() {
         settingsFile.delete()
+        securitySettings.delete()
     }
 
     fun withSettings(configureClosure: Settings.() -> Unit) {
@@ -124,6 +133,149 @@ class MavenSettingsPluginTest {
             assertThat(it.name).isEqualTo("myRepo")
             assertThat((it as MavenArtifactRepository).credentials.username).isEqualTo("myUser")
             assertThat(it.credentials.password).isEqualTo("myPassword")
+        }
+    }
+
+    @Test
+    fun `should not fail when decrypting with invalid master password`() {
+        System.setProperty("user.home", securitySettings.parentFile.parent)
+        securitySettings.writeText("""
+            <settingsSecurity>
+                <master>{toto+svDJpdH4rlS1RZ6omZ4=}</master>
+            </settingsSecurity>
+            """.trimIndent())
+        withSettings {
+            mirror {
+                id = "myRepo"
+                mirrorOf = "*"
+                url = "http://maven.foo.bar"
+            }
+            server {
+                id = "myRepo"
+                username = "myUser"
+                password = "{kd2WsF7hXDwHDsvlAE7sbp7cGB2VWkVz/hJxFCPYcio=}"
+            }
+        }
+
+        project.run {
+            repositories.apply {
+                mavenCentral()
+            }
+        }
+
+        applyPlugin()
+
+
+        assertThat(project.repositories).hasSize(1).first().satisfies {
+            assertThat(it.name).isEqualTo("myRepo")
+            assertThat((it as MavenArtifactRepository).credentials.username).isEqualTo("myUser")
+            assertThat(it.credentials.password).isEqualTo("{kd2WsF7hXDwHDsvlAE7sbp7cGB2VWkVz/hJxFCPYcio=}")
+        }
+    }
+
+    @Test
+    fun `should not fail when decrypting with invalid password`() {
+        System.setProperty("user.home", securitySettings.parentFile.parent)
+        securitySettings.writeText("""
+            <settingsSecurity>
+                <master>{QeHdkBDuA30HULnWQdLwXML+svDJpdH4rlS1RZ6omZ4=}</master>
+            </settingsSecurity>
+            """.trimIndent())
+        withSettings {
+            mirror {
+                id = "myRepo"
+                mirrorOf = "*"
+                url = "http://maven.foo.bar"
+            }
+            server {
+                id = "myRepo"
+                username = "myUser"
+                password = "{toto/hJxFCPYcio=}"
+            }
+        }
+
+        project.run {
+            repositories.apply {
+                mavenCentral()
+            }
+        }
+
+        applyPlugin()
+
+
+        assertThat(project.repositories).hasSize(1).first().satisfies {
+            assertThat(it.name).isEqualTo("myRepo")
+            assertThat((it as MavenArtifactRepository).credentials.username).isEqualTo("myUser")
+            assertThat(it.credentials.password).isEqualTo("{toto/hJxFCPYcio=}")
+        }
+    }
+
+
+    @Test
+    fun `should decrypt password`() {
+        System.setProperty("user.home", securitySettings.parentFile.parent)
+        securitySettings.writeText("""
+            <settingsSecurity>
+                <master>{QeHdkBDuA30HULnWQdLwXML+svDJpdH4rlS1RZ6omZ4=}</master>
+            </settingsSecurity>
+            """.trimIndent())
+        withSettings {
+            mirror {
+                id = "myRepo"
+                mirrorOf = "*"
+                url = "http://maven.foo.bar"
+            }
+            server {
+                id = "myRepo"
+                username = "myUser"
+                password = "{kd2WsF7hXDwHDsvlAE7sbp7cGB2VWkVz/hJxFCPYcio=}"
+            }
+        }
+
+        project.run {
+            repositories.apply {
+                mavenCentral()
+            }
+        }
+
+        applyPlugin()
+
+
+        assertThat(project.repositories).hasSize(1).first().satisfies {
+            assertThat(it.name).isEqualTo("myRepo")
+            assertThat((it as MavenArtifactRepository).credentials.username).isEqualTo("myUser")
+            assertThat(it.credentials.password).isEqualTo("Kolkata\$105")
+        }
+    }
+
+    @Test
+    fun `should not fail when password looks encrypted and no settings-security file is provided`() {
+        withSettings {
+            mirror {
+                id = "myRepo"
+                mirrorOf = "*"
+                url = "http://maven.foo.bar"
+            }
+            server {
+                id = "myRepo"
+                username = "myUser"
+                password = "{kd2WsF7hXDwHDsvlAE7sbp7cGB2VWkVz/hJxFCPYcio=}"
+            }
+        }
+
+        project.run {
+            repositories.apply {
+                mavenCentral()
+            }
+        }
+
+        applyPlugin()
+
+
+        assertThat(project.repositories).hasSize(1).first().satisfies {
+            assertThat(it.name).isEqualTo("myRepo")
+            assertThat((it as MavenArtifactRepository).credentials.username).isEqualTo("myUser")
+            assertThat(it.credentials.password).isEqualTo("{kd2WsF7hXDwHDsvlAE7sbp7cGB2VWkVz/hJxFCPYcio=}")
         }
     }
 

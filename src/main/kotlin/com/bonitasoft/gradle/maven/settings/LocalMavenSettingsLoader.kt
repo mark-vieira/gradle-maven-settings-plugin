@@ -1,6 +1,5 @@
 package com.bonitasoft.gradle.maven.settings
 
-import org.apache.maven.settings.DefaultMavenSettingsBuilder
 import org.apache.maven.settings.Server
 import org.apache.maven.settings.Settings
 import org.apache.maven.settings.building.DefaultSettingsBuilderFactory
@@ -11,14 +10,12 @@ import org.sonatype.plexus.components.cipher.DefaultPlexusCipher
 import org.sonatype.plexus.components.sec.dispatcher.DefaultSecDispatcher.SYSTEM_PROPERTY_SEC_LOCATION
 import org.sonatype.plexus.components.sec.dispatcher.SecUtil
 import java.io.File
-import java.nio.file.Paths
-import kotlin.math.log
 
 
 class LocalMavenSettingsLoader(private val extension: MavenSettingsPluginExtension, private val logger: Logger) {
     //This configuration file is the one inside the maven installation
     private val globalSettingsFile = File(System.getenv("M2_HOME").orEmpty()).toPath().resolve("conf").resolve("settings.xml")
-    private val settingsSecurityFile = File(System.getProperty("user.home").orEmpty()).resolve(".m2").resolve("settings-security.xm")
+    private val settingsSecurityFile = File(System.getProperty("user.home").orEmpty()).resolve(".m2").resolve("settings-security.xml")
     private val cipher = DefaultPlexusCipher()
 
 
@@ -50,27 +47,33 @@ class LocalMavenSettingsLoader(private val extension: MavenSettingsPluginExtensi
     }
 
     private fun Settings.decryptCredentials(): Settings {
-        try {
             val masterPassword = when {
                 settingsSecurityFile.exists() && !settingsSecurityFile.isDirectory ->
-                    cipher.decryptDecorated(SecUtil.read(settingsSecurityFile.absolutePath, true).master, SYSTEM_PROPERTY_SEC_LOCATION)
+                    try {
+                        cipher.decryptDecorated(SecUtil.read(settingsSecurityFile.absolutePath, true).master, SYSTEM_PROPERTY_SEC_LOCATION)
+                    }catch (e:java.lang.Exception){
+                        logger.warn("Unable to decrypt master password provided in settings-security.xml file, use '--debug' to have the details: ${e.message}")
+                        return this
+                    }
                 else -> null
             }
 
             servers.forEach { server ->
-                logger.debug("Processing credentials for server ${server.id}")
-                server.password?.apply {
-                    server.password = handlePasswordDecryption(server, this, masterPassword)
-                }
-                server.passphrase?.apply {
-                    server.passphrase = handlePasswordDecryption(server, this, masterPassword)
+                try {
+                    logger.debug("Processing credentials for server ${server.id}")
+                    server.password?.apply {
+                        server.password = handlePasswordDecryption(server, this, masterPassword)
+                    }
+                    server.passphrase?.apply {
+                        server.passphrase = handlePasswordDecryption(server, this, masterPassword)
+                    }
+                } catch (e: Exception) {
+                    logger.warn("It looks like the password provided for the server ${server.id} is encrypted but we are unable to decrypt it, use '--debug' to have the details: ${e.message}")
+                    logger.debug("Error while decrypting password:", e)
                 }
             }
-        } catch (e: Exception) {
-            throw RuntimeException("Unable to decrypt local Maven settings credentials.", e)
-        }
         return this
-    }
+        }
 
     private fun handlePasswordDecryption(server: Server, password: String, masterPassword: String?): String {
         if (password.startsWith("\${env.")) {
@@ -79,7 +82,8 @@ class LocalMavenSettingsLoader(private val extension: MavenSettingsPluginExtensi
             }")
         } else if (cipher.isEncryptedString(password)) {
             if (masterPassword == null) {
-                throw RuntimeException("Maven settings contains encrypted credentials yet no settings-security.xml exists.")
+                logger.warn("It looks like the password provided for the server ${server.id} is encrypted but there is no settings-security.xml file with a master password.")
+                return password
             }
             val decryptDecorated = cipher.decryptDecorated(password, masterPassword)
             logger.debug("Successfully decrypted password/passphrase for server ${server.id}")
