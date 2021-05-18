@@ -12,6 +12,7 @@ import org.apache.maven.settings.Settings
 import org.apache.maven.settings.SettingsUtils
 import org.apache.maven.settings.building.SettingsBuildingException
 import org.codehaus.plexus.util.xml.Xpp3Dom
+import org.gradle.api.Action
 import org.gradle.api.GradleScriptException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -27,7 +28,6 @@ import org.gradle.authentication.http.HttpHeaderAuthentication
 import java.net.InetAddress
 import java.net.NetworkInterface
 import java.net.URI
-import java.util.function.Predicate
 
 const val EXTENSION_NAME = "mavenSettings"
 
@@ -45,6 +45,7 @@ class MavenSettingsPlugin : Plugin<Project> {
             registerMirrors(project)
             applyRepoCredentials(project, project.repositories)
             applyRepoCredentials(project, project.extensions.findByType(PublishingExtension::class.java)?.repositories)
+            logger.debug("After configuration, repositories are: ${project.repositories.map { it.name }}")
         }
     }
 
@@ -128,23 +129,24 @@ class MavenSettingsPlugin : Plugin<Project> {
     }
 
     private fun registerMirrors(project: Project) {
+        val mirrorsToAdd = mutableMapOf<String, Action<MavenArtifactRepository>>()
         project.repositories.toList().filter { repo ->
             if (repo.name.equals(ArtifactRepositoryContainer.DEFAULT_MAVEN_LOCAL_REPO_NAME)) {
                 return@filter false
             }
+            // If the current repository has a mirror defined in maven's settings.xml:
             repo.getMirror(settings)?.also { mirror ->
-                if (!project.repositories.names.contains(mirror.id)) {
-                    project.repositories.maven { repo ->
-                        repo.name = mirror.id
-                        repo.url = URI.create(mirror.url)
-                        project.logger.info("Replaced '${repo.name}' with mirror ${mirror.id} configured in maven's settings.xml")
-                    }
-                } else {
-                    project.logger.info("Replaced '${repo.name}' with mirror ${mirror.id} (already created) configured in maven's settings.xml")
+                project.logger.info("Replaced '${repo.name}' with mirror '${mirror.id}' configured in maven's settings.xml")
+                mirrorsToAdd.putIfAbsent(mirror.id) { repo ->
+                    repo.name = mirror.id
+                    repo.url = URI.create(mirror.url)
                 }
             } != null
         }.forEach {
             project.repositories.remove(it)
+        }
+        mirrorsToAdd.forEach { (_, action) ->
+            project.repositories.maven(action)
         }
     }
 
