@@ -15,13 +15,13 @@ To use the plugin, add the following to your `build.gradle` file.
 ### groovy
 ```groovy
     plugins {
-      id "com.bonitasoft.gradle.maven-settings" version "0.7.2"
+      id "com.bonitasoft.gradle.maven-settings" version "0.7.3"
     }
 ```
 ### kotlin
 ```kotlin
     plugins {
-        id("com.bonitasoft.gradle.maven-settings") version "0.7.2"
+        id("com.bonitasoft.gradle.maven-settings") version "0.7.3"
     }
 ```
 
