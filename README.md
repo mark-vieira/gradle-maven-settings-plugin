@@ -106,3 +106,19 @@ properties are available.
 * `activeProfiles` - List of profile ids to treat as active.
 * `exportGradleProps` - Flag indicating whether or not Gradle project properties should be exported for the purposes of 
 settings file property interpolation and profile activation. This defaults to `true`.
+
+## Development
+
+### Make a release
+
+1. Create the release commit with:
+    1. Update the README.md and put the next version in in the examples
+    2. Update gradle.properties with the next version
+    3. Commit with title `release: x.y.z`
+2. Create a commit to prepare next version:
+    1. Change only the gradle.properties and put the next version with SNAPSHOT
+    2. Commit with title `prepare next version`
+3. Push changes
+4. Create a tag with the version as name on the commit `release: x.y.z` from before
+5. Push the tag
+6. A release will be automatically published on Gradle plugin portal
