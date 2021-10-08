@@ -98,10 +98,12 @@ class MavenSettingsPlugin : Plugin<Project> {
         gradleRepository.url = URI(mavenRepository.url)
         if (mavenRepository.releases != null) {
             gradleRepository.mavenContent { content ->
-                if (mavenRepository.releases.isEnabled && !mavenRepository.snapshots.isEnabled) {
+                val releaseEnabled = mavenRepository.releases == null || mavenRepository.releases.isEnabled
+                val snapshotsEnabled = mavenRepository.snapshots == null || mavenRepository.snapshots.isEnabled
+                if (releaseEnabled && !snapshotsEnabled) {
                     content.releasesOnly()
                 }
-                if (mavenRepository.releases.isEnabled && !mavenRepository.snapshots.isEnabled) {
+                if (snapshotsEnabled && !releaseEnabled) {
                     content.snapshotsOnly()
                 }
             }

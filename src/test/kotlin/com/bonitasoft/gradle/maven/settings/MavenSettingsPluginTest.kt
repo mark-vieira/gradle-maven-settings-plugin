@@ -738,4 +738,37 @@ class MavenSettingsPluginTest {
             assertThat((it as MavenArtifactRepository).url).isEqualTo(URI("http://maven.mirror.com"))
         }
     }
+
+    @Test
+    fun `should work with releaseOnly profile`() {
+        withSettings {
+            profile {
+                id = "profile1"
+                repository {
+                    id = "releaseOnly"
+                    url = "http://maven.repo1.com"
+                    releases = RepositoryPolicy().apply {
+                        isEnabled = true
+                    }
+                }
+            }
+            activeProfiles = listOf("profile1")
+        }
+        project.run {
+            pluginManager.apply("maven-publish")
+            repositories.apply {
+                mavenCentral()
+            }
+        }
+
+        applyPlugin()
+
+        assertThat(project.repositories.names).containsOnly("releaseOnly", "MavenRepo")
+        assertThat(project.repositories.getByName("releaseOnly") as MavenArtifactRepository).satisfies {
+            it.content {
+                assertThat((it as MavenRepositoryContentDescriptor).releasesOnly())
+            }
+        }
+    }
+
 }
