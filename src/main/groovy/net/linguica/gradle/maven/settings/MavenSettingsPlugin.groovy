@@ -21,6 +21,7 @@ import org.apache.maven.model.InputLocation
 import org.apache.maven.model.Profile
 import org.apache.maven.model.building.ModelProblem
 import org.apache.maven.model.building.ModelProblemCollector
+import org.apache.maven.model.building.ModelProblemCollectorRequest
 import org.apache.maven.model.path.DefaultPathTranslator
 import org.apache.maven.model.profile.DefaultProfileActivationContext
 import org.apache.maven.model.profile.DefaultProfileSelector
@@ -78,8 +79,10 @@ class MavenSettingsPlugin implements Plugin<Project> {
     private void activateProfiles(Project project, MavenSettingsPluginExtension extension) {
         DefaultProfileSelector profileSelector = new DefaultProfileSelector()
         DefaultProfileActivationContext activationContext = new DefaultProfileActivationContext()
-        List<ProfileActivator> profileActivators = [new JdkVersionProfileActivator(), new OperatingSystemProfileActivator(),
-                                                new PropertyProfileActivator(), new FileProfileActivator().setPathTranslator(new DefaultPathTranslator())]
+        List<ProfileActivator> profileActivators = [new JdkVersionProfileActivator(),
+                                                    new OperatingSystemProfileActivator(),
+                                                    new PropertyProfileActivator(),
+                                                    new FileProfileActivator()]
         profileActivators.each { profileSelector.addProfileActivator(it) }
 
         activationContext.setActiveProfileIds(extension.activeProfiles.toList() + settings.activeProfiles)
@@ -92,13 +95,13 @@ class MavenSettingsPlugin implements Plugin<Project> {
         List<Profile> profiles = profileSelector.getActiveProfiles(settings.profiles.collect { return SettingsUtils.convertFromSettingsProfile(it) },
                 activationContext, new ModelProblemCollector() {
             @Override
-            void add(ModelProblem.Severity severity, String s, InputLocation inputLocation, Exception e) {
+            void add(ModelProblemCollectorRequest req) {
 
             }
         })
 
         profiles.each { profile ->
-            for (Entry entry: profile.properties) {
+            for (Entry entry : profile.properties) {
                 project.extensions.getByType(ExtraPropertiesExtension).set(entry.key.toString(), entry.value.toString())
             }
         }
