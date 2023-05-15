@@ -1,7 +1,7 @@
 plugins {
-    id("com.gradle.plugin-publish") version "0.14.0"
+    id("com.gradle.plugin-publish") version "1.2.0"
     `groovy-gradle-plugin`
-    kotlin("jvm") version "1.4.32"
+    id("org.jetbrains.kotlin.jvm") version "1.8.21"
     id("maven-publish")
 }
 
@@ -29,33 +29,46 @@ dependencies {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+    toolchain.languageVersion.set(JavaLanguageVersion.of(17))
 }
 
-pluginBundle {
-    website = "https://github.com/bonitasoft-labs/gradle-maven-settings-plugin"
-    vcsUrl = "https://github.com/bonitasoft-labs/gradle-maven-settings-plugin"
-    description = """
-        | Gradle plugin for exposing Maven settings file configuration to Gradle project.
-        |
-        | This project is forked from https://github.com/mark-vieira/gradle-maven-settings-plugin
-        | And will add more support of the `settings.xml` file (repositories in profiles)
-    """.trimMargin()
-    tags = listOf("settings", "maven")
+kotlin {
+    jvmToolchain(17)
+}
 
-    mavenCoordinates {
-        groupId = "com.bonitasoft.gradle"
-        artifactId = "maven-settings-plugin"
-    }
+tasks.withType<JavaCompile> {
+    options.compilerArgs.addAll(arrayOf("--release", "11"))
+}
+
+tasks.withType<JavaCompile>().configureEach {
+    javaCompiler.set(javaToolchains.compilerFor {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    })
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+  kotlinOptions {
+    jvmTarget = "11"
+  }
 }
 
 gradlePlugin {
+    website.set("https://github.com/bonitasoft-labs/gradle-maven-settings-plugin")
+    vcsUrl.set("https://github.com/bonitasoft-labs/gradle-maven-settings-plugin")    
     plugins {
         create("mavenSettings") {
             id = "com.bonitasoft.gradle.maven-settings"
-            displayName = "Maven Settings Plugin"
             implementationClass = "com.bonitasoft.gradle.maven.settings.MavenSettingsPlugin"
+            displayName = "Maven Settings Plugin"
+            description = """
+            | Gradle plugin for exposing Maven settings file configuration to Gradle project.
+            |
+            | This project is forked from https://github.com/mark-vieira/gradle-maven-settings-plugin
+                | And will add more support of the `settings.xml` file (repositories in profiles)
+                """.trimMargin()
+            tags.set(listOf("settings", "maven"))
         }
     }
 }
